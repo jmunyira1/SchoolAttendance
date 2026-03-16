@@ -1,0 +1,219 @@
+{% extends 'base.html' %}
+
+{% block title %}Import Staff{% endblock %}
+{% block page_title %}Import Staff from Excel{% endblock %}
+
+{% block page_actions %}
+    <a href="{% url 'people:staff_list' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="ri ri-arrow-left-line me-1"></i> Back to Staff
+    </a>
+{% endblock %}
+
+{% block content %}
+
+    {% if not results %}
+
+        <div class="row justify-content-center">
+            <div class="col-md-7">
+
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="ri ri-information-line me-2"></i>How this works</h6>
+                    </div>
+                    <div class="card-body">
+                        <ol class="mb-3 ps-3 small text-body-secondary">
+                            <li class="mb-1">Select whether you are importing <strong>Teaching staff</strong> or <strong>Non-teaching staff</strong>.</li>
+                            <li class="mb-1">Upload your Excel or CSV file.</li>
+                            <li>Staff are matched by <strong>TSC Number</strong> (teaching) or <strong>National ID</strong> (non-teaching) — existing records are updated, new ones are created.</li>
+                        </ol>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="card border">
+                                    <div class="card-body py-3">
+                                        <h6 class="mb-2 text-primary">Teaching Staff</h6>
+                                        <table class="table table-sm table-bordered mb-0 small">
+                                            <thead class="table-light"><tr><th>Column</th><th>Required</th></tr></thead>
+                                            <tbody>
+                                            <tr><td><code>TSC Number</code></td><td><span class="badge bg-danger">Required</span></td></tr>
+                                            <tr><td><code>Name</code></td><td><span class="badge bg-danger">Required</span></td></tr>
+                                            <tr><td><code>Designation</code> / <code>Subject</code></td><td><span class="badge bg-label-secondary">Optional</span></td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card border">
+                                    <div class="card-body py-3">
+                                        <h6 class="mb-2 text-info">Non-teaching Staff</h6>
+                                        <table class="table table-sm table-bordered mb-0 small">
+                                            <thead class="table-light"><tr><th>Column</th><th>Required</th></tr></thead>
+                                            <tbody>
+                                            <tr><td><code>National ID</code></td><td><span class="badge bg-danger">Required</span></td></tr>
+                                            <tr><td><code>Name</code></td><td><span class="badge bg-danger">Required</span></td></tr>
+                                            <tr><td><code>Designation</code> / <code>Role</code></td><td><span class="badge bg-label-secondary">Optional</span></td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info mt-3 mb-0 py-2 small">
+                            <i class="ri ri-information-line me-2"></i>
+                            You can also use a generic <code>Staff ID</code> column name for either type.
+                            Accepted formats: .xlsx, .xls, .csv
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="ri ri-upload-2-line me-2"></i>Upload</h6>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
+
+                            <div class="mb-4">
+                                <label class="form-label fw-medium">
+                                    Step 1 — Staff Type <span class="text-danger">*</span>
+                                </label>
+                                <div class="d-flex gap-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="staff_type"
+                                               id="type_teaching" value="teaching" required />
+                                        <label class="form-check-label" for="type_teaching">
+                                            <strong>Teaching staff</strong>
+                                            <small class="d-block text-body-secondary">ID column: TSC Number</small>
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="staff_type"
+                                               id="type_nonteaching" value="non_teaching" />
+                                        <label class="form-check-label" for="type_nonteaching">
+                                            <strong>Non-teaching staff</strong>
+                                            <small class="d-block text-body-secondary">ID column: National ID</small>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-5">
+                                <label class="form-label fw-medium">
+                                    Step 2 — Choose File <span class="text-danger">*</span>
+                                </label>
+                                <input type="file" name="excel_file" class="form-control"
+                                       accept=".xlsx,.xls,.csv" required />
+                                <div class="form-text text-body-secondary">Accepted: .xlsx, .xls, .csv</div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="ri ri-upload-2-line me-2"></i>Upload &amp; Import
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    {% else %}
+
+        <!-- Summary -->
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-md-3">
+                <div class="card text-center h-100">
+                    <div class="card-body py-4">
+                        <h3 class="mb-1 text-success">{{ created_count }}</h3>
+                        <small class="text-body-secondary">Created</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card text-center h-100">
+                    <div class="card-body py-4">
+                        <h3 class="mb-1 text-primary">{{ updated_count }}</h3>
+                        <small class="text-body-secondary">Updated</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card text-center h-100">
+                    <div class="card-body py-4">
+                        <h3 class="mb-1 text-danger">{{ error_count }}</h3>
+                        <small class="text-body-secondary">Errors</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card text-center h-100">
+                    <div class="card-body py-4">
+                        <h3 class="mb-1 text-warning">{{ skipped_count }}</h3>
+                        <small class="text-body-secondary">Skipped</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if staff_type %}
+            <div class="alert alert-info mb-4 py-2 small">
+                <i class="ri ri-information-line me-2"></i>
+                Imported as <strong>{% if staff_type == 'teaching' %}Teaching Staff{% else %}Non-teaching Staff{% endif %}</strong>.
+            </div>
+        {% endif %}
+
+        <div class="card mb-4">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <h6 class="mb-0">
+                    Results <span class="badge bg-label-primary ms-2">{{ total }} rows</span>
+                </h6>
+                <a href="{% url 'people:import_staff' %}" class="btn btn-sm btn-outline-primary">
+                    <i class="ri ri-upload-2-line me-1"></i> Import Another File
+                </a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0">
+                    <thead>
+                    <tr>
+                        <th>Row</th>
+                        <th>Staff ID</th>
+                        <th>Name</th>
+                        <th>Status</th>
+                        <th>Message</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for r in results %}
+                        <tr>
+                            <td class="text-body-secondary small">{{ r.row }}</td>
+                            <td><code>{{ r.staff_id }}</code></td>
+                            <td>{{ r.name }}</td>
+                            <td>
+                                {% if r.status == 'created' %}<span class="badge bg-label-success">Created</span>
+                                {% elif r.status == 'updated' %}<span class="badge bg-label-primary">Updated</span>
+                                {% elif r.status == 'error' %}<span class="badge bg-label-danger">Error</span>
+                                {% elif r.status == 'skipped' %}<span class="badge bg-label-warning">Skipped</span>
+                                {% endif %}
+                            </td>
+                            <td class="small text-body-secondary">{{ r.message }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a href="{% url 'people:staff_list' %}" class="btn btn-primary">
+                <i class="ri ri-group-line me-1"></i> View All Staff
+            </a>
+            <a href="{% url 'people:import_staff' %}" class="btn btn-outline-secondary">
+                <i class="ri ri-upload-2-line me-1"></i> Import Another File
+            </a>
+        </div>
+
+    {% endif %}
+
+{% endblock %}

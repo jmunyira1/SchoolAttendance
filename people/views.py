@@ -132,7 +132,7 @@ def student_delete(request, pk):
         student.save()
         messages.success(request, 'Student deactivated.')
         return redirect('people:student_list')
-    return render(request, 'people/confirm_delete.html', {'object': student, 'title': 'Deactivate Student'})
+    return render(request, 'confirm_delete.html', {'object': student, 'title': 'Deactivate Student'})
 
 
 # --- Staff ---
@@ -183,4 +183,4 @@ def staff_delete(request, pk):
         member.save()
         messages.success(request, 'Staff member deactivated.')
         return redirect('people:staff_list')
-    return render(request, 'people/confirm_delete.html', {'object': member, 'title': 'Deactivate Staff Member'})
+    return render(request, 'confirm_delete.html', {'object': member, 'title': 'Deactivate Staff Member'})

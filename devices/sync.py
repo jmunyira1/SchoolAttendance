@@ -411,3 +411,110 @@ def push_fingerprints(device: Device, zk_user_ids: list = None) -> dict:
         logger.error(f'[push_fp] {device.name} failed: {e}')
 
     return result
+def fill_absent_records():
+    """
+    For every past school day in the current term, create ABSENT
+    AttendanceRecords for any active enrolled person (student or staff)
+    who has no record for that day.
+    Only processes days up to and including yesterday — today may still
+    have pending punches.
+    """
+    from datetime import date, timedelta
+    from attendance.models import AttendanceRecord
+    from people.models import Student, StaffMember
+    from core.models import Term, SchoolWeek, NonSchoolDay, SchoolDayConfig
+
+    result = {'created': 0, 'errors': []}
+
+    try:
+        current_term = Term.objects.get(is_current=True)
+        current_year = current_term.academic_year
+    except Term.DoesNotExist:
+        return result
+
+    today         = date.today()
+    yesterday     = today - timedelta(days=1)
+    non_school    = set(NonSchoolDay.objects.values_list('date', flat=True))
+
+    # get school-wide active days (day_of_week numbers)
+    global_days = set(
+        SchoolDayConfig.objects.filter(stream__isnull=True).values_list('day_of_week', flat=True)
+    )
+    # fallback to Mon-Fri if no config defined
+    if not global_days:
+        global_days = {0, 1, 2, 3, 4}
+
+    # build list of past school days in current term up to yesterday
+    school_days = []
+    cursor = max(current_term.start_date, today.replace(month=1, day=1) - timedelta(days=365))
+    cursor = current_term.start_date
+    while cursor <= min(yesterday, current_term.end_date):
+        if cursor not in non_school and cursor.weekday() in global_days:
+            school_days.append(cursor)
+        cursor += timedelta(days=1)
+
+    if not school_days:
+        return result
+
+    # get school week map
+    week_map = {}
+    for week in current_term.weeks.all():
+        d = week.start_date
+        while d <= week.end_date:
+            week_map[d] = week
+            d += timedelta(days=1)
+
+    # active enrolled students and staff
+    students = list(Student.objects.filter(is_active=True, zk_user_id__isnull=False))
+    staff    = list(StaffMember.objects.filter(is_active=True, zk_user_id__isnull=False))
+
+    for school_day in school_days:
+        school_week = week_map.get(school_day)
+
+        # students
+        existing_student_ids = set(
+            AttendanceRecord.objects.filter(
+                date=school_day,
+                person_type=AttendanceRecord.STUDENT
+            ).values_list('student_id', flat=True)
+        )
+        for student in students:
+            if student.pk not in existing_student_ids:
+                try:
+                    AttendanceRecord.objects.create(
+                        person_type   = AttendanceRecord.STUDENT,
+                        student       = student,
+                        date          = school_day,
+                        academic_year = current_year,
+                        term          = current_term,
+                        school_week   = school_week,
+                        status        = AttendanceRecord.ABSENT,
+                    )
+                    result['created'] += 1
+                except Exception as e:
+                    result['errors'].append(f'Student {student.pk} {school_day}: {e}')
+
+        # staff
+        existing_staff_ids = set(
+            AttendanceRecord.objects.filter(
+                date=school_day,
+                person_type=AttendanceRecord.STAFF
+            ).values_list('staff_member_id', flat=True)
+        )
+        for member in staff:
+            if member.pk not in existing_staff_ids:
+                try:
+                    AttendanceRecord.objects.create(
+                        person_type   = AttendanceRecord.STAFF,
+                        staff_member  = member,
+                        date          = school_day,
+                        academic_year = current_year,
+                        term          = current_term,
+                        school_week   = school_week,
+                        status        = AttendanceRecord.ABSENT,
+                    )
+                    result['created'] += 1
+                except Exception as e:
+                    result['errors'].append(f'Staff {member.pk} {school_day}: {e}')
+
+    return result

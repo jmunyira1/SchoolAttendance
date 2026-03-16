@@ -92,4 +92,4 @@ def user_delete(request, pk):
         user.delete()
         messages.success(request, 'User deleted.')
         return redirect('accounts:user_list')
-    return render(request, 'accounts/confirm_delete.html', {'object': user, 'title': 'Delete User'})
+    return render(request, 'confirm_delete.html', {'object': user, 'title': 'Delete User'})

@@ -1,79 +1,91 @@
 {% extends 'base.html' %}
 
 {% block title %}Staff{% endblock %}
-{% block menu_people %}open{% endblock %}
-{% block menu_staff %}active{% endblock %}
 
 {% block page_title %}Staff Members{% endblock %}
 
 {% block page_actions %}
-  {% if request.user.is_admin %}
-    <a href="{% url 'people:staff_create' %}" class="btn btn-primary btn-sm">
-      <i class="ri ri-user-add-line me-1"></i> Add Staff
-    </a>
-  {% endif %}
+    {% if request.user.is_admin %}
+        <a href="{% url 'people:import_staff' %}" class="btn btn-outline-success btn-sm me-2">
+            <i class="ri ri-file-excel-line me-1"></i> Import from Excel
+        </a>
+        <a href="{% url 'people:staff_create' %}" class="btn btn-primary btn-sm">
+            <i class="ri ri-user-add-line me-1"></i> Add Staff
+        </a>
+    {% endif %}
 {% endblock %}
 
 {% block content %}
 
-<div class="card">
-  <div class="card-header">
-    <h6 class="mb-0">Staff <span class="badge bg-label-primary ms-2">{{ staff.count }}</span></h6>
-  </div>
-  <div class="table-responsive">
-    <table class="table table-hover mb-0">
-      <thead>
-        <tr>
-          <th>Staff ID</th>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Designation</th>
-          <th>ZK ID</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for member in staff %}
-        <tr>
-          <td><code>{{ member.staff_id }}</code></td>
-          <td><a href="{% url 'people:staff_detail' member.pk %}">{{ member.full_name }}</a></td>
-          <td>
-            {% if member.staff_type == 'teaching' %}
-              <span class="badge bg-label-primary">Teaching</span>
-            {% else %}
-              <span class="badge bg-label-secondary">Non-teaching</span>
-            {% endif %}
-          </td>
-          <td>{{ member.designation|default:"-" }}</td>
-          <td>
-            {% if member.zk_user_id %}
-              <span class="badge bg-label-success">{{ member.zk_user_id }}</span>
-            {% else %}
-              <span class="badge bg-label-secondary">Not enrolled</span>
-            {% endif %}
-          </td>
-          <td>
-            <a href="{% url 'attendance:staff_detail' member.pk %}" class="btn btn-sm btn-outline-primary me-1" title="Attendance">
-              <i class="ri ri-calendar-check-line"></i>
-            </a>
-            {% if request.user.is_admin %}
-              <a href="{% url 'people:staff_edit' member.pk %}" class="btn btn-sm btn-outline-secondary me-1">
-                <i class="ri ri-edit-line"></i>
-              </a>
-              <a href="{% url 'people:staff_delete' member.pk %}" class="btn btn-sm btn-outline-danger">
-                <i class="ri ri-delete-bin-line"></i>
-              </a>
-            {% endif %}
-          </td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="6" class="text-center text-body-secondary py-5">No staff members found.</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</div>
+    <div class="card">
+        <div class="card-header">
+            <h6 class="mb-0">Staff <span class="badge bg-label-primary ms-2">{{ staff.count }}</span></h6>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                <tr>
+                    <th>Staff ID</th>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Designation</th>
+                    <th>ZK Enrolled</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for member in staff %}
+                    <tr>
+                        <td><code>{{ member.staff_id }}</code></td>
+                        <td><a href="{% url 'people:staff_detail' member.pk %}">{{ member.full_name }}</a></td>
+                        <td>
+                            {% if member.staff_type == 'teaching' %}
+                                <span class="badge bg-label-primary">Teaching</span>
+                            {% else %}
+                                <span class="badge bg-label-secondary">Non-teaching</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ member.designation|default:"-" }}</td>
+                        <td>
+                            {% if member.zk_user_id %}
+                                <span class="badge bg-label-success">
+                <i class="ri ri-fingerprint-line me-1"></i>{{ member.zk_user_id }}
+              </span>
+                            {% else %}
+                                <span class="badge bg-label-secondary">Not enrolled</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'attendance:staff_detail' member.pk %}"
+                               class="btn btn-sm btn-outline-primary me-1" title="Attendance">
+                                <i class="ri ri-calendar-check-line"></i>
+                            </a>
+                            {% if request.user.is_admin %}
+                                <a href="{% url 'people:staff_edit' member.pk %}"
+                                   class="btn btn-sm btn-outline-secondary me-1" title="Edit">
+                                    <i class="ri ri-edit-line"></i>
+                                </a>
+                                <a href="{% url 'people:staff_delete' member.pk %}"
+                                   class="btn btn-sm btn-outline-danger" title="Deactivate">
+                                    <i class="ri ri-delete-bin-line"></i>
+                                </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center text-body-secondary py-5">
+                            No staff members found.
+                            {% if request.user.is_admin %}
+                                <a href="{% url 'people:staff_create' %}">Add one</a> or
+                                <a href="{% url 'people:import_staff' %}">import from Excel</a>.
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 
 {% endblock %}
