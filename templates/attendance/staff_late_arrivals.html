@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+
+{% block title %}Staff Late Arrivals{% endblock %}
+
+{% block page_title %}Staff Late Arrivals Report{% endblock %}
+
+{% block page_actions %}
+  <a href="{% url 'attendance:staff_daily' %}" class="btn btn-outline-secondary btn-sm me-2">
+    <i class="ri ri-calendar-check-line me-1"></i> Daily Register
+  </a>
+  <a href="{% url 'attendance:staff_term_summary' %}" class="btn btn-outline-primary btn-sm">
+    <i class="ri ri-bar-chart-line me-1"></i> Term Summary
+  </a>
+{% endblock %}
+
+{% block content %}
+
+<!-- Filters -->
+<div class="card mb-4">
+  <div class="card-body">
+    <form method="get" class="row g-3 align-items-end">
+      <div class="col-md-3">
+        <label class="form-label">From</label>
+        <input type="date" name="date_from" value="{{ date_from|date:'Y-m-d' }}" class="form-control" />
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">To</label>
+        <input type="date" name="date_to" value="{{ date_to|date:'Y-m-d' }}" class="form-control" />
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Staff Type</label>
+        <select name="staff_type" class="form-select">
+          <option value="" {% if not selected_type %}selected{% endif %}>All Staff</option>
+          <option value="teaching" {% if selected_type == 'teaching' %}selected{% endif %}>Teaching</option>
+          <option value="non_teaching" {% if selected_type == 'non_teaching' %}selected{% endif %}>Non-teaching</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <button type="submit" class="btn btn-primary w-100">
+          <i class="ri ri-search-line me-1"></i> Filter
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="row g-4">
+
+  <!-- Most late arrivals — summary -->
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-header">
+        <h6 class="mb-0">
+          Most Late Arrivals
+          <span class="badge bg-label-warning ms-2">{{ total_late }} total</span>
+        </h6>
+      </div>
+      <div class="card-body p-0">
+        <ul class="list-group list-group-flush">
+          {% for row in summary %}
+          <li class="list-group-item d-flex align-items-center justify-content-between px-3 py-2">
+            <div>
+              <a href="{% url 'attendance:staff_detail' row.member.pk %}" class="text-body small fw-medium">
+                {{ row.member.full_name }}
+              </a>
+              <div class="text-body-secondary" style="font-size:11px;">{{ row.member.staff_id }}</div>
+            </div>
+            <span class="badge bg-label-warning">{{ row.count }} time{{ row.count|pluralize }}</span>
+          </li>
+          {% empty %}
+          <li class="list-group-item text-center text-body-secondary py-4 small">
+            No late arrivals in this period.
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detailed late records -->
+  <div class="col-md-8">
+    <div class="card h-100">
+      <div class="card-header">
+        <h6 class="mb-0">
+          Late Records — {{ date_from|date:"d M" }} to {{ date_to|date:"d M Y" }}
+        </h6>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover table-sm mb-0">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Name</th>
+              <th>Type</th>
+              <th>Check In</th>
+              <th>Check Out</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for record in late_records %}
+            <tr>
+              <td>{{ record.date|date:"d M Y" }} <small class="text-body-secondary">({{ record.date|date:"D" }})</small></td>
+              <td>
+                <a href="{% url 'attendance:staff_detail' record.staff_member.pk %}">
+                  {{ record.staff_member.full_name }}
+                </a>
+              </td>
+              <td>
+                {% if record.staff_member.staff_type == 'teaching' %}
+                  <span class="badge bg-label-primary">Teaching</span>
+                {% else %}
+                  <span class="badge bg-label-secondary">Non-teaching</span>
+                {% endif %}
+              </td>
+              <td>
+                <span class="text-warning fw-medium">{{ record.check_in|default:"-" }}</span>
+              </td>
+              <td>{{ record.check_out|default:"-" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="5" class="text-center text-body-secondary py-5">
+                <i class="ri ri-checkbox-circle-line ri-2x text-success mb-2 d-block"></i>
+                No late arrivals in this period.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}

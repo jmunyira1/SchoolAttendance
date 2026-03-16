@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block title %}Forms{% endblock %}
+{% block menu_config %}open{% endblock %}
+
+{% block page_title %}Forms / Grades{% endblock %}
+
+{% block page_actions %}
+  <a href="{% url 'people:form_create' %}" class="btn btn-primary btn-sm">
+    <i class="ri ri-add-line me-1"></i> Add Form
+  </a>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Order</th>
+          <th>Streams</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for form in forms %}
+        <tr>
+          <td><strong>{{ form.name }}</strong></td>
+          <td>{{ form.order }}</td>
+          <td>
+            {% for stream in form.streams.all %}
+              <span class="badge bg-label-primary me-1">{{ stream.name }}</span>
+            {% empty %}
+              <span class="text-body-secondary small">No streams</span>
+            {% endfor %}
+          </td>
+          <td>
+            <a href="{% url 'people:form_edit' form.pk %}" class="btn btn-sm btn-outline-secondary">
+              <i class="ri ri-edit-line"></i>
+            </a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="4" class="text-center text-body-secondary py-5">
+            No forms defined. <a href="{% url 'people:form_create' %}">Add one</a>.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

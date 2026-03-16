@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+
+{% block title %}Students{% endblock %}
+
+{% block page_title %}Students{% endblock %}
+
+{% block page_actions %}
+  {% if request.user.is_admin %}
+    <a href="{% url 'people:import_students' %}" class="btn btn-outline-success btn-sm me-2">
+      <i class="ri ri-file-excel-line me-1"></i> Import from Excel
+    </a>
+    <a href="{% url 'people:student_create' %}" class="btn btn-primary btn-sm">
+      <i class="ri ri-user-add-line me-1"></i> Add Student
+    </a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+
+<div class="card mb-4">
+  <div class="card-body">
+    <form method="get" class="row g-3 align-items-end">
+      <div class="col-md-4">
+        <label class="form-label">Filter by Stream</label>
+        <select name="stream" class="form-select">
+          <option value="">All Streams</option>
+          {% for stream in streams %}
+            <option value="{{ stream.pk }}" {% if selected_stream == stream.pk|stringformat:'s' %}selected{% endif %}>
+              {{ stream.full_name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <button type="submit" class="btn btn-primary w-100">Filter</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header d-flex align-items-center justify-content-between">
+    <h6 class="mb-0">Students <span class="badge bg-label-primary ms-2">{{ students.count }}</span></h6>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th>Admission No.</th>
+          <th>Name</th>
+          <th>Stream</th>
+          <th>ZK ID</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for student in students %}
+        <tr>
+          <td><code>{{ student.admission_number }}</code></td>
+          <td>
+            <a href="{% url 'people:student_detail' student.pk %}">{{ student.full_name }}</a>
+          </td>
+          <td>{{ student.stream.full_name }}</td>
+          <td>
+            {% if student.zk_user_id %}
+              <span class="badge bg-label-success">{{ student.zk_user_id }}</span>
+            {% else %}
+              <span class="badge bg-label-secondary">Not enrolled</span>
+            {% endif %}
+          </td>
+          <td>
+            <a href="{% url 'attendance:student_detail' student.pk %}" class="btn btn-sm btn-outline-primary me-1" title="Attendance">
+              <i class="ri ri-calendar-check-line"></i>
+            </a>
+            {% if request.user.is_admin %}
+              <a href="{% url 'people:student_edit' student.pk %}" class="btn btn-sm btn-outline-secondary me-1" title="Edit">
+                <i class="ri ri-edit-line"></i>
+              </a>
+              <a href="{% url 'people:student_delete' student.pk %}" class="btn btn-sm btn-outline-danger" title="Deactivate">
+                <i class="ri ri-delete-bin-line"></i>
+              </a>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" class="text-center text-body-secondary py-5">
+            No students found.
+            {% if request.user.is_admin %}
+              <a href="{% url 'people:student_create' %}">Add one</a> or
+              <a href="{% url 'people:import_students' %}">import from Excel</a>.
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

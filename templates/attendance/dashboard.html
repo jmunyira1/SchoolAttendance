@@ -1,0 +1,204 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+{% block menu_dashboard %}active{% endblock %}
+
+{% block page_title %}
+  Attendance Dashboard
+  {% if current_term %}
+    <small class="text-body-secondary fs-6 ms-2">{{ current_term }} &mdash; {{ current_term.academic_year }}</small>
+  {% endif %}
+{% endblock %}
+
+{% block page_actions %}
+  <a href="{% url 'attendance:daily' %}" class="btn btn-primary btn-sm">
+    <i class="ri ri-calendar-check-line me-1"></i> Daily Register
+  </a>
+{% endblock %}
+
+{% block content %}
+
+{% if not current_term %}
+  <div class="alert alert-warning">
+    <i class="ri ri-alert-line me-2"></i>
+    No active term configured. <a href="{% url 'core:term_list' %}">Set a current term</a> to start tracking attendance.
+  </div>
+{% endif %}
+
+<!-- Today's summary cards -->
+<div class="row g-4 mb-4">
+
+  <div class="col-sm-6 col-xl-3">
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-3">
+          <div class="avatar me-3">
+            <span class="avatar-initial rounded-circle bg-label-success">
+              <i class="ri ri-user-follow-line icon-22px"></i>
+            </span>
+          </div>
+          <div>
+            <p class="mb-0 text-body-secondary small">Students Present</p>
+            <h5 class="mb-0">{{ present_students }} <small class="text-body-secondary fw-normal fs-6">/ {{ total_students }}</small></h5>
+          </div>
+        </div>
+        <div class="progress" style="height: 6px;">
+          {% if total_students > 0 %}
+            <div class="progress-bar bg-success" style="width: {% widthratio present_students total_students 100 %}%"></div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-xl-3">
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-3">
+          <div class="avatar me-3">
+            <span class="avatar-initial rounded-circle bg-label-danger">
+              <i class="ri ri-user-unfollow-line icon-22px"></i>
+            </span>
+          </div>
+          <div>
+            <p class="mb-0 text-body-secondary small">Students Absent</p>
+            <h5 class="mb-0">{{ absent_students }} <small class="text-body-secondary fw-normal fs-6">/ {{ total_students }}</small></h5>
+          </div>
+        </div>
+        <div class="progress" style="height: 6px;">
+          {% if total_students > 0 %}
+            <div class="progress-bar bg-danger" style="width: {% widthratio absent_students total_students 100 %}%"></div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-xl-3">
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-3">
+          <div class="avatar me-3">
+            <span class="avatar-initial rounded-circle bg-label-warning">
+              <i class="ri ri-time-line icon-22px"></i>
+            </span>
+          </div>
+          <div>
+            <p class="mb-0 text-body-secondary small">Students Late</p>
+            <h5 class="mb-0">{{ late_students }}</h5>
+          </div>
+        </div>
+        <div class="progress" style="height: 6px;">
+          {% if total_students > 0 %}
+            <div class="progress-bar bg-warning" style="width: {% widthratio late_students total_students 100 %}%"></div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-xl-3">
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-3">
+          <div class="avatar me-3">
+            <span class="avatar-initial rounded-circle bg-label-info">
+              <i class="ri ri-group-line icon-22px"></i>
+            </span>
+          </div>
+          <div>
+            <p class="mb-0 text-body-secondary small">Staff Present</p>
+            <h5 class="mb-0">{{ present_staff }} <small class="text-body-secondary fw-normal fs-6">/ {{ total_staff }}</small></h5>
+          </div>
+        </div>
+        <div class="progress" style="height: 6px;">
+          {% if total_staff > 0 %}
+            <div class="progress-bar bg-info" style="width: {% widthratio present_staff total_staff 100 %}%"></div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Quick links -->
+<div class="row g-4">
+  <div class="col-md-3">
+    <div class="card h-100">
+      <div class="card-body text-center py-5">
+        <i class="ri ri-calendar-check-line ri-3x text-primary mb-3"></i>
+        <h6 class="mb-1">Student Daily</h6>
+        <p class="text-body-secondary small mb-3">Today's student attendance by stream</p>
+        <a href="{% url 'attendance:daily' %}" class="btn btn-primary btn-sm">View Register</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card h-100">
+      <div class="card-body text-center py-5">
+        <i class="ri ri-user-unfollow-line ri-3x text-danger mb-3"></i>
+        <h6 class="mb-1">Absentees</h6>
+        <p class="text-body-secondary small mb-3">Students absent today</p>
+        <a href="{% url 'attendance:absentees' %}" class="btn btn-danger btn-sm">View Absentees</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card h-100">
+      <div class="card-body text-center py-5">
+        <i class="ri ri-group-2-line ri-3x text-info mb-3"></i>
+        <h6 class="mb-1">Staff Daily</h6>
+        <p class="text-body-secondary small mb-3">Today's staff attendance register</p>
+        <a href="{% url 'attendance:staff_daily' %}" class="btn btn-info btn-sm">View Staff</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card h-100">
+      <div class="card-body text-center py-5">
+        <i class="ri ri-bar-chart-line ri-3x text-success mb-3"></i>
+        <h6 class="mb-1">Term Summary</h6>
+        <p class="text-body-secondary small mb-3">Full term attendance statistics</p>
+        <a href="{% url 'attendance:term_summary' %}" class="btn btn-success btn-sm">View Summary</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Sync results (collapsible, for admin) -->
+{% if request.user.is_admin and sync_results %}
+  <div class="mt-4">
+    <a class="btn btn-sm btn-outline-secondary" data-bs-toggle="collapse" href="#syncResults">
+      <i class="ri ri-refresh-line me-1"></i> Last Sync Results
+    </a>
+    <div class="collapse mt-2" id="syncResults">
+      <div class="card card-body">
+        <div class="table-responsive">
+          <table class="table table-sm table-bordered mb-0">
+            <thead><tr><th>Device</th><th>Status</th><th>New Punches</th><th>Duplicates</th><th>Error</th></tr></thead>
+            <tbody>
+              {% for r in sync_results.sync_results %}
+              <tr>
+                <td>{{ r.device }}</td>
+                <td>
+                  {% if r.success %}
+                    <span class="badge bg-label-success">OK</span>
+                  {% else %}
+                    <span class="badge bg-label-danger">Failed</span>
+                  {% endif %}
+                </td>
+                <td>{{ r.new_punches }}</td>
+                <td>{{ r.duplicate_punches }}</td>
+                <td class="text-danger small">{{ r.error|default:"-" }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endif %}
+
+{% endblock %}

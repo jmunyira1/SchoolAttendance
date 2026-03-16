@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+
+{% block title %}Push Fingerprints{% endblock %}
+{% block menu_devices %}open{% endblock %}
+
+{% block page_title %}Push Fingerprints to {{ device.name }}{% endblock %}
+
+{% block page_actions %}
+  <a href="{% url 'devices:fingerprint_list' %}" class="btn btn-outline-secondary btn-sm">
+    <i class="ri ri-arrow-left-line me-1"></i> Back
+  </a>
+{% endblock %}
+
+{% block content %}
+
+{% if not total %}
+  <div class="alert alert-warning">
+    <i class="ri ri-alert-line me-2"></i>
+    No fingerprint templates in the database yet.
+    <a href="{% url 'devices:fingerprint_list' %}">Backup from a device first</a>.
+  </div>
+{% else %}
+
+<div class="alert alert-info mb-4">
+  <i class="ri ri-information-line me-2"></i>
+  <strong>{{ total }}</strong> templates available.
+  Only templates for users already enrolled on <strong>{{ device.name }}</strong> will be pushed.
+  Users not yet on the device must be enrolled physically first.
+</div>
+
+<form method="post">
+  {% csrf_token %}
+
+  <div class="card mb-4">
+    <div class="card-header d-flex align-items-center justify-content-between">
+      <h6 class="mb-0">Select People to Push</h6>
+      <div>
+        <button type="button" class="btn btn-sm btn-outline-secondary me-1" id="selectAll">Select All</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" id="selectNone">Clear</button>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th style="width:40px;">
+              <input type="checkbox" id="checkAll" class="form-check-input" />
+            </th>
+            <th>ZK User ID</th>
+            <th>Person</th>
+            <th>Type</th>
+            <th>Fingers</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in grouped %}
+          <tr>
+            <td>
+              <input type="checkbox" name="zk_user_ids" value="{{ row.uid }}"
+                     class="form-check-input row-check" checked />
+            </td>
+            <td><code>{{ row.uid }}</code></td>
+            <td>
+              {% if row.person %}
+                {{ row.person.full_name }}
+              {% else %}
+                <span class="text-body-secondary small">Unknown (ZK#{{ row.uid }})</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if row.person %}
+                {% if row.person.admission_number %}
+                  <span class="badge bg-label-primary">Student</span>
+                {% else %}
+                  <span class="badge bg-label-info">Staff</span>
+                {% endif %}
+              {% else %}
+                <span class="badge bg-label-secondary">-</span>
+              {% endif %}
+            </td>
+            <td>
+              {% for fid in row.fingers %}
+                <span class="badge bg-label-success me-1">{{ fid }}</span>
+              {% endfor %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="d-flex gap-2">
+    <button type="submit" class="btn btn-success">
+      <i class="ri ri-upload-2-line me-1"></i> Push to {{ device.name }}
+    </button>
+    <a href="{% url 'devices:fingerprint_list' %}" class="btn btn-outline-secondary">Cancel</a>
+  </div>
+
+</form>
+
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.getElementById('checkAll').addEventListener('change', function() {
+    document.querySelectorAll('.row-check').forEach(cb => cb.checked = this.checked);
+  });
+  document.getElementById('selectAll').addEventListener('click', function() {
+    document.querySelectorAll('.row-check').forEach(cb => cb.checked = true);
+    document.getElementById('checkAll').checked = true;
+  });
+  document.getElementById('selectNone').addEventListener('click', function() {
+    document.querySelectorAll('.row-check').forEach(cb => cb.checked = false);
+    document.getElementById('checkAll').checked = false;
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block title %}School Day Config{% endblock %}
+{% block menu_config %}open{% endblock %}
+
+{% block page_title %}School Day Configuration{% endblock %}
+
+{% block page_actions %}
+  <a href="{% url 'core:school_day_config_create' %}" class="btn btn-primary btn-sm">
+    <i class="ri ri-add-line me-1"></i> Add Config
+  </a>
+{% endblock %}
+
+{% block content %}
+
+<div class="alert alert-info mb-4">
+  <i class="ri ri-information-line me-2"></i>
+  Define which days of the week each stream attends. If no config exists for a stream,
+  the <strong>school-wide</strong> config applies. Add one entry per stream per day.
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th>Stream</th>
+          <th>Day</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for config in configs %}
+        <tr>
+          <td>
+            {% if config.stream %}
+              <strong>{{ config.stream.full_name }}</strong>
+            {% else %}
+              <span class="badge bg-label-success">School-wide</span>
+            {% endif %}
+          </td>
+          <td>{{ config.get_day_of_week_display }}</td>
+          <td>
+            <a href="{% url 'core:school_day_config_delete' config.pk %}"
+               class="btn btn-sm btn-outline-danger"
+               onclick="return confirm('Remove this config?')">
+              <i class="ri ri-delete-bin-line"></i>
+            </a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="3" class="text-center text-body-secondary py-5">
+            No school day configs defined.
+            <a href="{% url 'core:school_day_config_create' %}">Add one</a>.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

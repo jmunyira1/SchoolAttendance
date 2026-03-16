@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+
+{% block title %}Daily Register{% endblock %}
+{% block menu_attendance %}open{% endblock %}
+{% block menu_attendance_daily %}active{% endblock %}
+
+{% block page_title %}Daily Attendance Register{% endblock %}
+
+{% block page_actions %}
+  <a href="{% url 'attendance:absentees' %}?date={{ selected_date|date:'Y-m-d' }}" class="btn btn-outline-danger btn-sm">
+    <i class="ri ri-user-unfollow-line me-1"></i> View Absentees
+  </a>
+{% endblock %}
+
+{% block content %}
+
+<!-- Filters -->
+<div class="card mb-4">
+  <div class="card-body">
+    <form method="get" class="row g-3 align-items-end">
+      <div class="col-md-3">
+        <label class="form-label">Date</label>
+        <input type="date" name="date" value="{{ selected_date|date:'Y-m-d' }}" class="form-control" />
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Stream</label>
+        <select name="stream" class="form-select">
+          <option value="">All Streams</option>
+          {% for stream in streams %}
+            <option value="{{ stream.pk }}" {% if selected_stream == stream.pk|stringformat:'s' %}selected{% endif %}>
+              {{ stream.full_name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Type</label>
+        <select name="type" class="form-select">
+          <option value="student" {% if selected_type == 'student' %}selected{% endif %}>Students</option>
+          <option value="staff" {% if selected_type == 'staff' %}selected{% endif %}>Staff</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <button type="submit" class="btn btn-primary w-100">
+          <i class="ri ri-search-line me-1"></i> Filter
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Results -->
+<div class="card">
+  <div class="card-header d-flex align-items-center justify-content-between">
+    <h6 class="mb-0">
+      {{ selected_date|date:"l, d F Y" }} &mdash;
+      {% if selected_type == 'student' %}Students{% else %}Staff{% endif %}
+      <span class="badge bg-label-primary ms-2">{{ records.count }} records</span>
+    </h6>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          {% if selected_type == 'student' %}
+            <th>Admission No.</th>
+            <th>Name</th>
+            <th>Stream</th>
+          {% else %}
+            <th>Staff ID</th>
+            <th>Name</th>
+            <th>Type</th>
+          {% endif %}
+          <th>Check In</th>
+          <th>Check Out</th>
+          <th>Status</th>
+          {% if request.user.is_admin or request.user.is_principal_or_deputy %}
+            <th>Action</th>
+          {% endif %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for record in records %}
+        <tr>
+          {% if selected_type == 'student' %}
+            <td><code>{{ record.student.admission_number }}</code></td>
+            <td>
+              <a href="{% url 'attendance:student_detail' record.student.pk %}">
+                {{ record.student.full_name }}
+              </a>
+              {% if record.is_overridden %}
+                <span class="badge bg-label-warning ms-1" title="Manually overridden">edited</span>
+              {% endif %}
+            </td>
+            <td>{{ record.student.stream.full_name }}</td>
+          {% else %}
+            <td><code>{{ record.staff_member.staff_id }}</code></td>
+            <td>
+              <a href="{% url 'attendance:staff_detail' record.staff_member.pk %}">
+                {{ record.staff_member.full_name }}
+              </a>
+            </td>
+            <td>{{ record.staff_member.get_staff_type_display }}</td>
+          {% endif %}
+          <td>{{ record.check_in|default:"-" }}</td>
+          <td>{{ record.check_out|default:"-" }}</td>
+          <td>
+            {% if record.status == 'present' %}
+              <span class="badge bg-label-success">Present</span>
+            {% elif record.status == 'late' %}
+              <span class="badge bg-label-warning">Late</span>
+            {% elif record.status == 'absent' %}
+              <span class="badge bg-label-danger">Absent</span>
+            {% elif record.status == 'excused' %}
+              <span class="badge bg-label-info">Excused</span>
+            {% endif %}
+          </td>
+          {% if request.user.is_admin or request.user.is_principal_or_deputy %}
+          <td>
+            <a href="{% url 'attendance:override' record.pk %}?next={{ request.get_full_path|urlencode }}"
+               class="btn btn-sm btn-outline-secondary">
+              <i class="ri ri-edit-line"></i>
+            </a>
+          </td>
+          {% endif %}
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" class="text-center text-body-secondary py-5">
+            <i class="ri ri-inbox-line ri-2x mb-2 d-block"></i>
+            No records found for this date and filter.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

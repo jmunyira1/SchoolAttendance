@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ staff_member.full_name }}{% endblock %}
+
+{% block page_title %}{{ staff_member.full_name }}{% endblock %}
+
+{% block page_actions %}
+  <a href="{% url 'attendance:staff_daily' %}" class="btn btn-outline-secondary btn-sm">
+    <i class="ri ri-arrow-left-line me-1"></i> Staff Register
+  </a>
+{% endblock %}
+
+{% block content %}
+
+<div class="row g-4 mb-4">
+
+  <!-- Profile -->
+  <div class="col-md-3">
+    <div class="card h-100">
+      <div class="card-body text-center py-5">
+        {% if staff_member.photo %}
+          <img src="{{ staff_member.photo.url }}"
+               class="rounded-circle mb-3"
+               style="width:80px;height:80px;object-fit:cover;" />
+        {% else %}
+          <div class="avatar mx-auto mb-3" style="width:80px;height:80px;">
+            <span class="avatar-initial rounded-circle bg-label-info"
+                  style="font-size:2rem;width:80px;height:80px;line-height:80px;">
+              {{ staff_member.full_name|first|upper }}
+            </span>
+          </div>
+        {% endif %}
+        <h6 class="mb-1">{{ staff_member.full_name }}</h6>
+        <p class="text-body-secondary small mb-1">{{ staff_member.designation|default:staff_member.get_staff_type_display }}</p>
+        <code class="small">{{ staff_member.staff_id }}</code>
+      </div>
+      <div class="card-body border-top pt-3">
+        <dl class="row mb-0 small">
+          <dt class="col-6 text-body-secondary">{{ staff_member.id_label }}</dt>
+          <dd class="col-6"><code>{{ staff_member.staff_id }}</code></dd>
+          <dt class="col-6 text-body-secondary">Type</dt>
+          <dd class="col-6">{{ staff_member.get_staff_type_display }}</dd>
+          <dt class="col-6 text-body-secondary">ZK Device ID</dt>
+          <dd class="col-6">
+            {% if staff_member.zk_user_id %}
+              <span class="badge bg-label-success">{{ staff_member.zk_user_id }}</span>
+            {% else %}
+              <span class="badge bg-label-danger">Not enrolled</span>
+            {% endif %}
+          </dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <!-- Term stats -->
+  <div class="col-md-9">
+
+    <!-- Summary cards -->
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-xl-3">
+        <div class="card text-center">
+          <div class="card-body py-3">
+            <h4 class="mb-0 text-success">{{ present }}</h4>
+            <small class="text-body-secondary">Present</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-xl-3">
+        <div class="card text-center">
+          <div class="card-body py-3">
+            <h4 class="mb-0 text-warning">{{ late }}</h4>
+            <small class="text-body-secondary">Late</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-xl-3">
+        <div class="card text-center">
+          <div class="card-body py-3">
+            <h4 class="mb-0 text-danger">{{ absent }}</h4>
+            <small class="text-body-secondary">Absent</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-xl-3">
+        <div class="card text-center">
+          <div class="card-body py-3">
+            <h4 class="mb-0 {% if pct < 80 %}text-danger{% else %}text-success{% endif %}">{{ pct }}%</h4>
+            <small class="text-body-secondary">Attendance</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Records table -->
+    <div class="card">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <h6 class="mb-0">
+          {% if current_term %}{{ current_term }}{% else %}No active term{% endif %}
+          <span class="badge bg-label-primary ms-2">{{ total }} days</span>
+        </h6>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover table-sm mb-0">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Day</th>
+              <th>Week</th>
+              <th>Check In</th>
+              <th>Check Out</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for record in records %}
+            <tr>
+              <td>{{ record.date|date:"d M Y" }}</td>
+              <td class="text-body-secondary small">{{ record.date|date:"D" }}</td>
+              <td>
+                {% if record.school_week %}
+                  <span class="badge bg-label-secondary">Wk {{ record.school_week.week_number }}</span>
+                {% else %}-{% endif %}
+              </td>
+              <td>
+                {% if record.status == 'late' %}
+                  <span class="text-warning fw-medium">{{ record.check_in|default:"-" }}</span>
+                {% else %}
+                  {{ record.check_in|default:"-" }}
+                {% endif %}
+              </td>
+              <td>{{ record.check_out|default:"-" }}</td>
+              <td>
+                {% if record.status == 'present' %}<span class="badge bg-label-success">Present</span>
+                {% elif record.status == 'late' %}<span class="badge bg-label-warning">Late</span>
+                {% elif record.status == 'absent' %}<span class="badge bg-label-danger">Absent</span>
+                {% elif record.status == 'excused' %}<span class="badge bg-label-info">Excused</span>
+                {% endif %}
+                {% if record.is_overridden %}
+                  <span class="badge bg-label-secondary ms-1">edited</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="6" class="text-center text-body-secondary py-4">
+                No attendance records this term.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}

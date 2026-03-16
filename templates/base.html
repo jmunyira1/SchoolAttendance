@@ -1,0 +1,404 @@
+{% load static %}
+<!doctype html>
+<html
+  lang="en"
+  class="layout-navbar-fixed layout-menu-fixed layout-compact"
+  dir="ltr"
+  data-skin="default"
+  data-bs-theme="light"
+  data-assets-path="{% static 'assets/' %}"
+  data-template="vertical-menu-template-no-customizer">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
+    <title>{% block title %}School Attendance{% endblock %} | SchoolAttend</title>
+
+    <link rel="icon" type="image/x-icon" href="{% static 'assets/img/favicon/favicon.ico' %}" />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+    <!-- Icons -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/fonts/iconify-icons.css' %}" />
+
+    <!-- Core CSS -->
+    <link rel="stylesheet" href="{% static 'assets/vendor/libs/node-waves/node-waves.css' %}" />
+    <link rel="stylesheet" href="{% static 'assets/vendor/css/core.css' %}" />
+    <link rel="stylesheet" href="{% static 'assets/css/demo.css' %}" />
+    <link rel="stylesheet" href="{% static 'assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css' %}" />
+
+    {% block extra_css %}{% endblock %}
+
+    <script src="{% static 'assets/vendor/js/helpers.js' %}"></script>
+    <script src="{% static 'assets/js/config.js' %}"></script>
+  </head>
+
+  <body>
+
+    {% with url_name=request.resolver_match.url_name app_name=request.resolver_match.app_name %}
+
+    <div class="layout-wrapper layout-content-navbar">
+      <div class="layout-container">
+
+        <!-- Sidebar Menu -->
+        <aside id="layout-menu" class="layout-menu menu-vertical menu">
+
+          <!-- Brand -->
+          <div class="app-brand demo">
+            <a href="{% url 'accounts:dashboard_redirect' %}" class="app-brand-link">
+              <span class="app-brand-logo demo text-primary">
+                <svg width="32" height="18" viewBox="0 0 38 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M30.0944 2.22569C29.0511 0.444187 26.7508 -0.172113 24.9566 0.849138C23.1623 1.87039 22.5536 4.14247 23.5969 5.92397L30.5368 17.7743C31.5801 19.5558 33.8804 20.1721 35.6746 19.1509C37.4689 18.1296 38.0776 15.8575 37.0343 14.076L30.0944 2.22569Z" fill="currentColor"/>
+                  <path d="M22.9676 2.22569C24.0109 0.444187 26.3112 -0.172113 28.1054 0.849138C29.8996 1.87039 30.5084 4.14247 29.4651 5.92397L22.5251 17.7743C21.4818 19.5558 19.1816 20.1721 17.3873 19.1509C15.5931 18.1296 14.9843 15.8575 16.0276 14.076L22.9676 2.22569Z" fill="currentColor"/>
+                  <path d="M7.82901 2.22569C8.87231 0.444187 11.1726 -0.172113 12.9668 0.849138C14.7611 1.87039 15.3698 4.14247 14.3265 5.92397L7.38656 17.7743C6.34325 19.5558 4.04298 20.1721 2.24875 19.1509C0.454514 18.1296 -0.154233 15.8575 0.88907 14.076L7.82901 2.22569Z" fill="currentColor"/>
+                </svg>
+              </span>
+              <span class="app-brand-text demo menu-text fw-semibold ms-2">SchoolAttend</span>
+            </a>
+            <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path d="M8.47365 11.7183C8.11707 12.0749 8.11707 12.6531 8.47365 13.0097L12.071 16.607C12.4615 16.9975 12.4615 17.6305 12.071 18.021C11.6805 18.4115 11.0475 18.4115 10.657 18.021L5.83009 13.1941C5.37164 12.7356 5.37164 11.9924 5.83009 11.5339L10.657 6.707C11.0475 6.31653 11.6805 6.31653 12.071 6.707C12.4615 7.09747 12.4615 7.73053 12.071 8.121L8.47365 11.7183Z" fill-opacity="0.9"/>
+                <path d="M14.3584 11.8336C14.0654 12.1266 14.0654 12.6014 14.3584 12.8944L18.071 16.607C18.4615 16.9975 18.4615 17.6305 18.071 18.021C17.6805 18.4115 17.0475 18.4115 16.657 18.021L11.6819 13.0459C11.3053 12.6693 11.3053 12.0587 11.6819 11.6821L16.657 6.707C17.0475 6.31653 17.6805 6.31653 18.071 6.707C18.4615 7.09747 18.4615 7.73053 18.071 8.121L14.3584 11.8336Z" fill-opacity="0.4"/>
+              </svg>
+            </a>
+          </div>
+
+          <div class="menu-inner-shadow"></div>
+
+          <ul class="menu-inner py-1">
+
+            {% if not request.user.is_storekeeper %}
+
+            <!-- Dashboard -->
+            <li class="menu-item {% if app_name == 'attendance' and url_name == 'dashboard' %}active{% endif %}">
+              <a href="{% url 'attendance:dashboard' %}" class="menu-link">
+                <i class="menu-icon icon-base ri ri-home-smile-line"></i>
+                <div>Dashboard</div>
+              </a>
+            </li>
+<!-- Attendance -->
+<li class="menu-item {% if app_name == 'attendance' and url_name != 'dashboard' and url_name != 'storekeeper' %}active open{% endif %}">
+  <a href="javascript:void(0);" class="menu-link menu-toggle">
+    <i class="menu-icon icon-base ri ri-calendar-check-line"></i>
+    <div>Attendance</div>
+  </a>
+  <ul class="menu-sub">
+
+    <!-- Students submenu -->
+    <li class="menu-item {% if url_name == 'daily' or url_name == 'absentees' or url_name == 'term_summary' %}active open{% endif %}">
+      <a href="javascript:void(0);" class="menu-link menu-toggle">
+        <div>Students</div>
+      </a>
+      <ul class="menu-sub">
+        <li class="menu-item {% if url_name == 'daily' %}active{% endif %}">
+          <a href="{% url 'attendance:daily' %}" class="menu-link">
+            <div>Daily Register</div>
+          </a>
+        </li>
+        <li class="menu-item {% if url_name == 'absentees' %}active{% endif %}">
+          <a href="{% url 'attendance:absentees' %}" class="menu-link">
+            <div>Absentees</div>
+          </a>
+        </li>
+        <li class="menu-item {% if url_name == 'term_summary' %}active{% endif %}">
+          <a href="{% url 'attendance:term_summary' %}" class="menu-link">
+            <div>Term Summary</div>
+          </a>
+        </li>
+      </ul>
+    </li>
+
+    <!-- Staff submenu -->
+    <li class="menu-item {% if url_name == 'staff_daily' or url_name == 'staff_term_summary' or url_name == 'staff_late_arrivals' or url_name == 'staff_detail' %}active open{% endif %}">
+      <a href="javascript:void(0);" class="menu-link menu-toggle">
+        <div>Staff</div>
+      </a>
+      <ul class="menu-sub">
+        <li class="menu-item {% if url_name == 'staff_daily' %}active{% endif %}">
+          <a href="{% url 'attendance:staff_daily' %}" class="menu-link">
+            <div>Daily Register</div>
+          </a>
+        </li>
+        <li class="menu-item {% if url_name == 'staff_term_summary' %}active{% endif %}">
+          <a href="{% url 'attendance:staff_term_summary' %}" class="menu-link">
+            <div>Term Summary</div>
+          </a>
+        </li>
+        <li class="menu-item {% if url_name == 'staff_late_arrivals' %}active{% endif %}">
+          <a href="{% url 'attendance:staff_late_arrivals' %}" class="menu-link">
+            <div>Late Arrivals</div>
+          </a>
+        </li>
+      </ul>
+    </li>
+
+  </ul>
+</li>
+            <!-- People -->
+            <li class="menu-item {% if app_name == 'people' %}active open{% endif %}">
+              <a href="javascript:void(0);" class="menu-link menu-toggle">
+                <i class="menu-icon icon-base ri ri-group-line"></i>
+                <div>People</div>
+              </a>
+              <ul class="menu-sub">
+                <li class="menu-item {% if url_name == 'student_list' or url_name == 'student_detail' or url_name == 'student_create' or url_name == 'student_edit' %}active{% endif %}">
+                  <a href="{% url 'people:student_list' %}" class="menu-link">
+                    <div>Students</div>
+                  </a>
+                </li>
+                <li class="menu-item {% if url_name == 'staff_list' or url_name == 'staff_detail' or url_name == 'staff_create' or url_name == 'staff_edit' %}active{% endif %}">
+                  <a href="{% url 'people:staff_list' %}" class="menu-link">
+                    <div>Staff</div>
+                  </a>
+                </li>
+              </ul>
+            </li>
+
+            {% endif %}
+
+            <!-- Storekeeper -->
+            {% if request.user.is_storekeeper %}
+            <li class="menu-item {% if url_name == 'storekeeper' %}active{% endif %}">
+              <a href="{% url 'attendance:storekeeper' %}" class="menu-link">
+                <i class="menu-icon icon-base ri ri-store-2-line"></i>
+                <div>Headcount</div>
+              </a>
+            </li>
+            {% endif %}
+
+            {% if request.user.is_admin %}
+
+            <!-- Administration header -->
+            <li class="menu-header small mt-5">
+              <span class="menu-header-text">Administration</span>
+            </li>
+
+            <!-- Devices -->
+            <li class="menu-item {% if app_name == 'devices' %}active open{% endif %}">
+              <a href="javascript:void(0);" class="menu-link menu-toggle">
+                <i class="menu-icon icon-base ri ri-fingerprint-line"></i>
+                <div>Devices</div>
+              </a>
+              <ul class="menu-sub">
+                <li class="menu-item {% if url_name == 'device_list' or url_name == 'device_create' or url_name == 'device_edit' or url_name == 'import_users' %}active{% endif %}">
+                  <a href="{% url 'devices:device_list' %}" class="menu-link">
+                    <div>Manage Devices</div>
+                  </a>
+                </li>
+                <li class="menu-item {% if url_name == 'fingerprint_list' or url_name == 'backup_fingerprints' or url_name == 'push_fingerprints' %}active{% endif %}">
+                  <a href="{% url 'devices:fingerprint_list' %}" class="menu-link">
+                    <div>Fingerprints</div>
+                  </a>
+                </li>
+                <li class="menu-item {% if url_name == 'punch_log_list' %}active{% endif %}">
+                  <a href="{% url 'devices:punch_log_list' %}" class="menu-link">
+                    <div>Punch Logs</div>
+                  </a>
+                </li>
+              </ul>
+            </li>
+
+            <!-- Calendar -->
+            <li class="menu-item {% if app_name == 'core' and url_name in 'academic_year_list,academic_year_create,term_list,term_create,term_edit,generate_weeks,non_school_day_list,non_school_day_create' %}active open{% endif %}">
+              <a href="javascript:void(0);" class="menu-link menu-toggle">
+                <i class="menu-icon icon-base ri ri-calendar-line"></i>
+                <div>Calendar</div>
+              </a>
+              <ul class="menu-sub">
+                <li class="menu-item {% if url_name == 'academic_year_list' or url_name == 'academic_year_create' %}active{% endif %}">
+                  <a href="{% url 'core:academic_year_list' %}" class="menu-link">
+                    <div>Academic Years</div>
+                  </a>
+                </li>
+                <li class="menu-item {% if url_name == 'term_list' or url_name == 'term_create' or url_name == 'term_edit' or url_name == 'generate_weeks' %}active{% endif %}">
+                  <a href="{% url 'core:term_list' %}" class="menu-link">
+                    <div>Terms &amp; Weeks</div>
+                  </a>
+                </li>
+                <li class="menu-item {% if url_name == 'non_school_day_list' or url_name == 'non_school_day_create' %}active{% endif %}">
+                  <a href="{% url 'core:non_school_day_list' %}" class="menu-link">
+                    <div>Non-School Days</div>
+                  </a>
+                </li>
+              </ul>
+            </li>
+
+            <!-- Configuration -->
+            <li class="menu-item {% if url_name in 'form_list,form_create,form_edit,stream_list,stream_create,stream_edit,late_threshold_list,late_threshold_create,late_threshold_edit,school_day_config_list,school_day_config_create' %}active open{% endif %}">
+              <a href="javascript:void(0);" class="menu-link menu-toggle">
+                <i class="menu-icon icon-base ri ri-settings-4-line"></i>
+                <div>Configuration</div>
+              </a>
+              <ul class="menu-sub">
+                <li class="menu-item {% if url_name == 'form_list' or url_name == 'form_create' or url_name == 'form_edit' %}active{% endif %}">
+                  <a href="{% url 'people:form_list' %}" class="menu-link">
+                    <div>Forms</div>
+                  </a>
+                </li>
+                <li class="menu-item {% if url_name == 'stream_list' or url_name == 'stream_create' or url_name == 'stream_edit' %}active{% endif %}">
+                  <a href="{% url 'people:stream_list' %}" class="menu-link">
+                    <div>Streams</div>
+                  </a>
+                </li>
+                <li class="menu-item {% if url_name == 'late_threshold_list' or url_name == 'late_threshold_create' or url_name == 'late_threshold_edit' %}active{% endif %}">
+                  <a href="{% url 'core:late_threshold_list' %}" class="menu-link">
+                    <div>Late Thresholds</div>
+                  </a>
+                </li>
+                <li class="menu-item {% if url_name == 'school_day_config_list' or url_name == 'school_day_config_create' %}active{% endif %}">
+                  <a href="{% url 'core:school_day_config_list' %}" class="menu-link">
+                    <div>School Day Config</div>
+                  </a>
+                </li>
+              </ul>
+            </li>
+
+            <!-- System Users -->
+            <li class="menu-item {% if app_name == 'accounts' and url_name != 'login' and url_name != 'logout' and url_name != 'dashboard_redirect' %}active{% endif %}">
+              <a href="{% url 'accounts:user_list' %}" class="menu-link">
+                <i class="menu-icon icon-base ri ri-shield-user-line"></i>
+                <div>System Users</div>
+              </a>
+            </li>
+
+            {% endif %}
+
+          </ul>
+        </aside>
+        <!-- / Sidebar -->
+
+        <div class="menu-mobile-toggler d-xl-none rounded-1">
+          <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large text-bg-secondary p-2 rounded-1">
+            <i class="ri ri-menu-line icon-base"></i>
+            <i class="ri ri-arrow-right-s-line icon-base"></i>
+          </a>
+        </div>
+
+        <!-- Layout page -->
+        <div class="layout-page">
+
+          <!-- Navbar -->
+          <nav class="layout-navbar container-xxl navbar-detached navbar navbar-expand-xl align-items-center bg-navbar-theme" id="layout-navbar">
+            <div class="layout-menu-toggle navbar-nav align-items-xl-center me-4 me-xl-0 d-xl-none">
+              <a class="nav-item nav-link px-0 me-xl-6" href="javascript:void(0)">
+                <i class="icon-base ri ri-menu-line icon-22px"></i>
+              </a>
+            </div>
+
+            <div class="navbar-nav-right d-flex align-items-center justify-content-end" id="navbar-collapse">
+              <ul class="navbar-nav flex-row align-items-center ms-md-auto">
+
+                <!-- User dropdown -->
+                <li class="nav-item navbar-dropdown dropdown-user dropdown">
+                  <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
+                    <div class="avatar avatar-online">
+                      <span class="avatar-initial rounded-circle bg-primary">
+                        {{ request.user.full_name|first|upper }}
+                      </span>
+                    </div>
+                  </a>
+                  <ul class="dropdown-menu dropdown-menu-end mt-3 py-2">
+                    <li>
+                      <a class="dropdown-item" href="#">
+                        <div class="d-flex align-items-center">
+                          <div class="flex-shrink-0 me-2">
+                            <div class="avatar">
+                              <span class="avatar-initial rounded-circle bg-primary">
+                                {{ request.user.full_name|first|upper }}
+                              </span>
+                            </div>
+                          </div>
+                          <div class="flex-grow-1">
+                            <h6 class="mb-0 small">{{ request.user.full_name }}</h6>
+                            <small class="text-body-secondary">{{ request.user.get_role_display }}</small>
+                          </div>
+                        </div>
+                      </a>
+                    </li>
+                    <li><div class="dropdown-divider"></div></li>
+                    <li>
+                      <div class="d-grid px-4 pt-2 pb-1">
+                        <a class="btn btn-sm btn-danger d-flex align-items-center justify-content-center gap-2"
+                           href="{% url 'accounts:logout' %}">
+                          <small class="align-middle">Logout</small>
+                          <i class="icon-base ri ri-logout-box-r-line icon-16px"></i>
+                        </a>
+                      </div>
+                    </li>
+                  </ul>
+                </li>
+                <!--/ User -->
+
+              </ul>
+            </div>
+          </nav>
+          <!-- / Navbar -->
+
+          <!-- Content wrapper -->
+          <div class="content-wrapper">
+            <div class="container-xxl flex-grow-1 container-p-y">
+
+              <!-- Page heading -->
+              <div class="d-flex align-items-center justify-content-between py-3 mb-4">
+                <h4 class="mb-0">{% block page_title %}{% endblock %}</h4>
+                <div>{% block page_actions %}{% endblock %}</div>
+              </div>
+
+              <!-- Flash messages -->
+              {% if messages %}
+                {% for message in messages %}
+                  <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show mb-4" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                  </div>
+                {% endfor %}
+              {% endif %}
+
+              {% block content %}{% endblock %}
+
+            </div>
+
+            <!-- Footer -->
+            <footer class="content-footer footer bg-footer-theme">
+              <div class="container-xxl">
+                <div class="footer-container d-flex align-items-center justify-content-between py-4 flex-md-row flex-column">
+                  <div class="mb-2 mb-md-0 text-body-secondary small">
+                    &copy; {% now "Y" %} SchoolAttendance System
+                  </div>
+                  <div class="text-body-secondary small">
+                    Django &amp; Materialize Admin
+                  </div>
+                </div>
+              </div>
+            </footer>
+
+            <div class="content-backdrop fade"></div>
+          </div>
+          <!-- / Content wrapper -->
+
+        </div>
+        <!-- / Layout page -->
+      </div>
+
+      <div class="layout-overlay layout-menu-toggle"></div>
+      <div class="drag-target"></div>
+    </div>
+
+    {% endwith %}
+
+    <!-- Core JS -->
+    <script src="{% static 'assets/vendor/libs/jquery/jquery.js' %}"></script>
+    <script src="{% static 'assets/vendor/libs/popper/popper.js' %}"></script>
+    <script src="{% static 'assets/vendor/js/bootstrap.js' %}"></script>
+    <script src="{% static 'assets/vendor/libs/node-waves/node-waves.js' %}"></script>
+    <script src="{% static 'assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js' %}"></script>
+    <script src="{% static 'assets/vendor/libs/hammer/hammer.js' %}"></script>
+    <script src="{% static 'assets/vendor/libs/i18n/i18n.js' %}"></script>
+    <script src="{% static 'assets/vendor/js/menu.js' %}"></script>
+    <script src="{% static 'assets/js/main.js' %}"></script>
+
+    {% block extra_js %}{% endblock %}
+  </body>
+</html>

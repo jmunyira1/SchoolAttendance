@@ -1,0 +1,233 @@
+{% extends 'base.html' %}
+
+{% block title %}Import Students{% endblock %}
+{% block page_title %}Import Students from Excel{% endblock %}
+
+{% block page_actions %}
+  <a href="{% url 'people:student_list' %}" class="btn btn-outline-secondary btn-sm">
+    <i class="ri ri-arrow-left-line me-1"></i> Back to Students
+  </a>
+{% endblock %}
+
+{% block content %}
+
+{% if not results %}
+
+<div class="row justify-content-center">
+  <div class="col-md-7">
+
+    <!-- Instructions -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h6 class="mb-0"><i class="ri ri-information-line me-2"></i>How this works</h6>
+      </div>
+      <div class="card-body">
+        <ol class="mb-3 ps-3 small text-body-secondary">
+          <li class="mb-1">Select the <strong>Form / Grade</strong> the students belong to.</li>
+          <li class="mb-1">Upload your Excel or CSV file — it must include a <strong>Stream</strong> column (e.g. <em>Alpha</em>, <em>Beta</em>).</li>
+          <li class="mb-1">The system combines your selected form with the stream from the file (e.g. Form 3 + Alpha = <strong>Form 3 Alpha</strong>).</li>
+          <li>Students are matched by <strong>Admission Number</strong> — existing records are updated, new ones are created.</li>
+        </ol>
+        <div class="table-responsive">
+          <table class="table table-sm table-bordered mb-0" style="max-width:480px;">
+            <thead class="table-light">
+              <tr><th>Column</th><th>Required</th><th>Example</th></tr>
+            </thead>
+            <tbody class="small">
+              <tr>
+                <td><code>Admission Number</code></td>
+                <td><span class="badge bg-danger">Required</span></td>
+                <td>ADM/2024/001</td>
+              </tr>
+              <tr>
+                <td><code>Name</code></td>
+                <td><span class="badge bg-danger">Required</span></td>
+                <td>John Kamau Mwangi</td>
+              </tr>
+              <tr>
+                <td><code>Stream</code></td>
+                <td><span class="badge bg-danger">Required</span></td>
+                <td>Alpha</td>
+              </tr>
+              <tr>
+                <td><code>Gender</code></td>
+                <td><span class="badge bg-label-secondary">Optional</span></td>
+                <td>M / F / Male / Female</td>
+              </tr>
+              <tr>
+                <td><code>UPI</code>, <code>common.kcse</code>, <code>Contacts</code></td>
+                <td><span class="badge bg-label-secondary">Optional</span></td>
+                <td>Ignored for now</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Upload form -->
+    <div class="card">
+      <div class="card-header">
+        <h6 class="mb-0"><i class="ri ri-upload-2-line me-2"></i>Upload</h6>
+      </div>
+      <div class="card-body">
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+
+          <div class="mb-4">
+            <label class="form-label fw-medium">
+              Step 1 — Select Form / Grade <span class="text-danger">*</span>
+            </label>
+            <select name="form" class="form-select" required>
+              <option value="">-- Choose a form --</option>
+              {% for sf in school_forms %}
+                <option value="{{ sf.pk }}">{{ sf.name }}</option>
+              {% empty %}
+                <option disabled>No forms configured</option>
+              {% endfor %}
+            </select>
+            <div class="form-text text-body-secondary">
+              Stream names in the file will be matched against streams under this form.
+            </div>
+          </div>
+
+          <div class="mb-5">
+            <label class="form-label fw-medium">
+              Step 2 — Choose File <span class="text-danger">*</span>
+            </label>
+            <input type="file"
+                   name="excel_file"
+                   class="form-control"
+                   accept=".xlsx,.xls,.csv"
+                   required />
+            <div class="form-text text-body-secondary">
+              Accepted: .xlsx, .xls, .csv
+            </div>
+          </div>
+
+          {% if not school_forms %}
+            <div class="alert alert-danger mb-3">
+              <i class="ri ri-alert-line me-2"></i>
+              No forms configured.
+              <a href="{% url 'people:form_list' %}">Add forms</a> before importing students.
+            </div>
+          {% endif %}
+
+          <button type="submit" class="btn btn-primary w-100"
+                  {% if not school_forms %}disabled{% endif %}>
+            <i class="ri ri-upload-2-line me-2"></i> Upload &amp; Import
+          </button>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{% else %}
+
+<!-- Summary cards -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="card text-center h-100">
+      <div class="card-body py-4">
+        <h3 class="mb-1 text-success">{{ created_count }}</h3>
+        <small class="text-body-secondary">Created</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card text-center h-100">
+      <div class="card-body py-4">
+        <h3 class="mb-1 text-primary">{{ updated_count }}</h3>
+        <small class="text-body-secondary">Updated</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card text-center h-100">
+      <div class="card-body py-4">
+        <h3 class="mb-1 text-danger">{{ error_count }}</h3>
+        <small class="text-body-secondary">Errors</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card text-center h-100">
+      <div class="card-body py-4">
+        <h3 class="mb-1 text-warning">{{ skipped_count }}</h3>
+        <small class="text-body-secondary">Skipped</small>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if selected_form %}
+<div class="alert alert-info mb-4 py-2 small">
+  <i class="ri ri-information-line me-2"></i>
+  Imported under <strong>{{ selected_form.name }}</strong> —
+  streams resolved as <strong>{{ selected_form.name }} + [stream from file]</strong>.
+</div>
+{% endif %}
+
+<!-- Results table -->
+<div class="card mb-4">
+  <div class="card-header d-flex align-items-center justify-content-between">
+    <h6 class="mb-0">
+      Results
+      <span class="badge bg-label-primary ms-2">{{ total }} rows processed</span>
+    </h6>
+    <a href="{% url 'people:import_students' %}" class="btn btn-sm btn-outline-primary">
+      <i class="ri ri-upload-2-line me-1"></i> Import Another File
+    </a>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-sm table-hover mb-0">
+      <thead>
+        <tr>
+          <th>Row</th>
+          <th>Adm No.</th>
+          <th>Name</th>
+          <th>Stream</th>
+          <th>Status</th>
+          <th>Message</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in results %}
+        <tr>
+          <td class="text-body-secondary small">{{ r.row }}</td>
+          <td><code>{{ r.adm }}</code></td>
+          <td>{{ r.name }}</td>
+          <td>{{ r.stream }}</td>
+          <td>
+            {% if r.status == 'created' %}
+              <span class="badge bg-label-success">Created</span>
+            {% elif r.status == 'updated' %}
+              <span class="badge bg-label-primary">Updated</span>
+            {% elif r.status == 'error' %}
+              <span class="badge bg-label-danger">Error</span>
+            {% elif r.status == 'skipped' %}
+              <span class="badge bg-label-warning">Skipped</span>
+            {% endif %}
+          </td>
+          <td class="small text-body-secondary">{{ r.message }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="d-flex gap-2">
+  <a href="{% url 'people:student_list' %}" class="btn btn-primary">
+    <i class="ri ri-group-line me-1"></i> View All Students
+  </a>
+  <a href="{% url 'people:import_students' %}" class="btn btn-outline-secondary">
+    <i class="ri ri-upload-2-line me-1"></i> Import Another File
+  </a>
+</div>
+
+{% endif %}
+
+{% endblock %}

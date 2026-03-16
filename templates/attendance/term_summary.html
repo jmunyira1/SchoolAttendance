@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block title %}Term Summary{% endblock %}
+{% block menu_attendance %}open{% endblock %}
+{% block menu_attendance_term %}active{% endblock %}
+
+{% block page_title %}
+  Term Summary
+  {% if current_term %}<small class="text-body-secondary fs-6 ms-2">{{ current_term }}</small>{% endif %}
+{% endblock %}
+
+{% block content %}
+
+<div class="card mb-4">
+  <div class="card-body">
+    <form method="get" class="row g-3 align-items-end">
+      <div class="col-md-4">
+        <label class="form-label">Filter by Stream</label>
+        <select name="stream" class="form-select">
+          <option value="">All Streams</option>
+          {% for stream in streams %}
+            <option value="{{ stream.pk }}" {% if selected_stream == stream.pk|stringformat:'s' %}selected{% endif %}>
+              {{ stream.full_name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <button type="submit" class="btn btn-primary w-100">
+          <i class="ri ri-filter-line me-1"></i> Filter
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th>Student</th>
+          <th>Stream</th>
+          <th class="text-center text-success">Present</th>
+          <th class="text-center text-warning">Late</th>
+          <th class="text-center text-danger">Absent</th>
+          <th class="text-center text-info">Excused</th>
+          <th class="text-center">Total Days</th>
+          <th>Attendance %</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in summary %}
+        <tr>
+          <td>
+            <a href="{% url 'attendance:student_detail' row.student.pk %}">
+              {{ row.student.full_name }}
+            </a>
+            <div class="text-body-secondary small">{{ row.student.admission_number }}</div>
+          </td>
+          <td>{{ row.student.stream.full_name }}</td>
+          <td class="text-center"><span class="badge bg-label-success">{{ row.present }}</span></td>
+          <td class="text-center"><span class="badge bg-label-warning">{{ row.late }}</span></td>
+          <td class="text-center"><span class="badge bg-label-danger">{{ row.absent }}</span></td>
+          <td class="text-center"><span class="badge bg-label-info">{{ row.excused }}</span></td>
+          <td class="text-center">{{ row.total }}</td>
+          <td style="min-width: 120px;">
+            {% if row.total > 0 %}
+              {% with pct=row.present|add:row.late %}
+              <div class="d-flex align-items-center gap-2">
+                <div class="progress flex-grow-1" style="height: 6px;">
+                  <div class="progress-bar
+                    {% widthratio pct row.total 100 as pct_val %}
+                    {% if pct_val >= 80 %}bg-success{% elif pct_val >= 60 %}bg-warning{% else %}bg-danger{% endif %}"
+                    style="width: {% widthratio pct row.total 100 %}%">
+                  </div>
+                </div>
+                <small>{% widthratio pct row.total 100 %}%</small>
+              </div>
+              {% endwith %}
+            {% else %}-{% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="8" class="text-center text-body-secondary py-5">No data available.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

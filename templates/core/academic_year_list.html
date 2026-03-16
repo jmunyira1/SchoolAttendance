@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block title %}Academic Years{% endblock %}
+{% block menu_calendar %}open{% endblock %}
+
+{% block page_title %}Academic Years{% endblock %}
+
+{% block page_actions %}
+  <a href="{% url 'core:academic_year_create' %}" class="btn btn-primary btn-sm">
+    <i class="ri ri-add-line me-1"></i> Add Year
+  </a>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th>Year</th>
+          <th>Terms</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for year in years %}
+        <tr>
+          <td><strong>{{ year.year }}</strong></td>
+          <td>
+            {% for term in year.terms.all %}
+              <span class="badge bg-label-primary me-1">Term {{ term.term_number }}</span>
+            {% empty %}
+              <span class="text-body-secondary small">No terms</span>
+            {% endfor %}
+          </td>
+          <td>
+            {% if year.is_current %}
+              <span class="badge bg-success">Current</span>
+            {% else %}
+              <span class="badge bg-label-secondary">Past</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="3" class="text-center text-body-secondary py-5">
+            No academic years. <a href="{% url 'core:academic_year_create' %}">Add one</a>.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

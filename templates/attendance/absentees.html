@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block title %}Absentees{% endblock %}
+{% block menu_attendance %}open{% endblock %}
+{% block menu_attendance_absentees %}active{% endblock %}
+
+{% block page_title %}Absentee Report{% endblock %}
+
+{% block content %}
+
+<div class="card mb-4">
+  <div class="card-body">
+    <form method="get" class="row g-3 align-items-end">
+      <div class="col-md-4">
+        <label class="form-label">Date</label>
+        <input type="date" name="date" value="{{ selected_date|date:'Y-m-d' }}" class="form-control" />
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Stream</label>
+        <select name="stream" class="form-select">
+          <option value="">All Streams</option>
+          {% for stream in streams %}
+            <option value="{{ stream.pk }}" {% if selected_stream == stream.pk|stringformat:'s' %}selected{% endif %}>
+              {{ stream.full_name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-4">
+        <button type="submit" class="btn btn-primary w-100">
+          <i class="ri ri-search-line me-1"></i> Filter
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h6 class="mb-0">
+      Absent Students &mdash; {{ selected_date|date:"d F Y" }}
+      <span class="badge bg-label-danger ms-2">{{ absentees.count }}</span>
+    </h6>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th>Admission No.</th>
+          <th>Name</th>
+          <th>Stream</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for record in absentees %}
+        <tr>
+          <td><code>{{ record.student.admission_number }}</code></td>
+          <td>{{ record.student.full_name }}</td>
+          <td>{{ record.student.stream.full_name }}</td>
+          <td>
+            <a href="{% url 'attendance:override' record.pk %}?next={{ request.get_full_path|urlencode }}"
+               class="btn btn-sm btn-outline-warning">
+              <i class="ri ri-edit-line me-1"></i> Mark Excused
+            </a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="4" class="text-center text-body-secondary py-5">
+            <i class="ri ri-checkbox-circle-line ri-2x text-success mb-2 d-block"></i>
+            No absentees for this date.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

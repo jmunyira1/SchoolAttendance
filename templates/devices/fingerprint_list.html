@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+
+{% block title %}Fingerprint Templates{% endblock %}
+{% block menu_devices %}open{% endblock %}
+
+{% block page_title %}Fingerprint Templates{% endblock %}
+
+{% block page_actions %}
+  <a href="{% url 'devices:device_list' %}" class="btn btn-outline-secondary btn-sm">
+    <i class="ri ri-arrow-left-line me-1"></i> Devices
+  </a>
+{% endblock %}
+
+{% block content %}
+
+<!-- Summary -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="card text-center">
+      <div class="card-body py-4">
+        <h3 class="mb-0 text-primary">{{ total_templates }}</h3>
+        <small class="text-body-secondary">Templates stored</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card text-center">
+      <div class="card-body py-4">
+        <h3 class="mb-0 text-success">{{ total_people }}</h3>
+        <small class="text-body-secondary">People enrolled</small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Device actions -->
+<div class="row g-3 mb-4">
+  {% for device in devices %}
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-body">
+        <h6 class="mb-1">{{ device.name }}</h6>
+        <small class="text-body-secondary d-block mb-3">{{ device.ip_address }} &mdash; {{ device.location|default:"No location" }}</small>
+        <div class="d-flex gap-2">
+          <a href="{% url 'devices:backup_fingerprints' device.pk %}"
+             class="btn btn-sm btn-outline-warning flex-grow-1">
+            <i class="ri ri-download-2-line me-1"></i> Backup from device
+          </a>
+          <a href="{% url 'devices:push_fingerprints' device.pk %}"
+             class="btn btn-sm btn-outline-success flex-grow-1">
+            <i class="ri ri-upload-2-line me-1"></i> Push to device
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Stored templates -->
+<div class="card">
+  <div class="card-header">
+    <h6 class="mb-0">Stored Fingerprint Templates</h6>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th>ZK User ID</th>
+          <th>Person</th>
+          <th>Type</th>
+          <th>Fingers Enrolled</th>
+          <th>Backed Up From</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in grouped %}
+        <tr>
+          <td><code>{{ row.uid }}</code></td>
+          <td>
+            {% if row.person %}
+              {{ row.person.full_name }}
+            {% else %}
+              <span class="text-body-secondary">Unknown (not mapped)</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if row.person %}
+              {% if row.person.admission_number %}
+                <span class="badge bg-label-primary">Student</span>
+              {% else %}
+                <span class="badge bg-label-info">Staff</span>
+              {% endif %}
+            {% else %}
+              <span class="badge bg-label-secondary">-</span>
+            {% endif %}
+          </td>
+          <td>
+            {% for fid in row.fingers %}
+              <span class="badge bg-label-success me-1">Finger {{ fid }}</span>
+            {% endfor %}
+          </td>
+          <td>
+            {% if row.source %}
+              <span class="badge bg-label-secondary">{{ row.source.name }}</span>
+            {% else %}-{% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" class="text-center text-body-secondary py-5">
+            <i class="ri ri-fingerprint-line ri-3x mb-3 d-block"></i>
+            No fingerprint templates stored yet.
+            Use <strong>Backup from device</strong> on any device above to start.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

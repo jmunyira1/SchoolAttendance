@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ student.full_name }}{% endblock %}
+{% block menu_people %}open{% endblock %}
+{% block menu_students %}active{% endblock %}
+
+{% block page_title %}Student Profile{% endblock %}
+
+{% block page_actions %}
+  <a href="{% url 'attendance:student_detail' student.pk %}" class="btn btn-outline-primary btn-sm me-2">
+    <i class="ri ri-calendar-check-line me-1"></i> Attendance
+  </a>
+  {% if request.user.is_admin %}
+    <a href="{% url 'people:student_edit' student.pk %}" class="btn btn-outline-secondary btn-sm me-2">
+      <i class="ri ri-edit-line me-1"></i> Edit
+    </a>
+    <a href="{% url 'people:student_delete' student.pk %}" class="btn btn-outline-danger btn-sm">
+      <i class="ri ri-delete-bin-line me-1"></i> Deactivate
+    </a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+
+  <!-- Profile card -->
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-body text-center py-5">
+        {% if student.photo %}
+          <img src="{{ student.photo.url }}"
+               class="rounded-circle mb-3"
+               style="width:100px;height:100px;object-fit:cover;" />
+        {% else %}
+          <div class="avatar avatar-xl mx-auto mb-3" style="width:80px;height:80px;">
+            <span class="avatar-initial rounded-circle bg-label-primary"
+                  style="font-size:2rem;width:80px;height:80px;line-height:80px;">
+              {{ student.full_name|first|upper }}
+            </span>
+          </div>
+        {% endif %}
+        <h5 class="mb-1">{{ student.full_name }}</h5>
+        <p class="text-body-secondary mb-0">{{ student.stream.full_name }}</p>
+        <code class="small">{{ student.admission_number }}</code>
+      </div>
+      <div class="card-body border-top pt-3">
+        <dl class="row mb-0 small">
+          <dt class="col-6 text-body-secondary">Admission No.</dt>
+          <dd class="col-6">{{ student.admission_number }}</dd>
+
+          <dt class="col-6 text-body-secondary">Form</dt>
+          <dd class="col-6">{{ student.stream.form }}</dd>
+
+          <dt class="col-6 text-body-secondary">Stream</dt>
+          <dd class="col-6">{{ student.stream.name }}</dd>
+
+          <dt class="col-6 text-body-secondary">Gender</dt>
+          <dd class="col-6">{{ student.get_gender_display|default:"-" }}</dd>
+
+          <dt class="col-6 text-body-secondary">Date of Birth</dt>
+          <dd class="col-6">{{ student.date_of_birth|date:"d M Y"|default:"-" }}</dd>
+
+          <dt class="col-6 text-body-secondary">ZK Device ID</dt>
+          <dd class="col-6">
+            {% if student.zk_user_id %}
+              <span class="badge bg-label-success">{{ student.zk_user_id }}</span>
+            {% else %}
+              <span class="badge bg-label-secondary">Not enrolled</span>
+            {% endif %}
+          </dd>
+
+          <dt class="col-6 text-body-secondary">Status</dt>
+          <dd class="col-6">
+            {% if student.is_active %}
+              <span class="badge bg-label-success">Active</span>
+            {% else %}
+              <span class="badge bg-label-danger">Inactive</span>
+            {% endif %}
+          </dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick attendance summary placeholder -->
+  <div class="col-md-8">
+    <div class="card h-100">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <h6 class="mb-0">Quick Info</h6>
+        <a href="{% url 'attendance:student_detail' student.pk %}" class="btn btn-sm btn-outline-primary">
+          Full Attendance Record
+        </a>
+      </div>
+      <div class="card-body text-center py-6 text-body-secondary">
+        <i class="ri ri-calendar-check-line ri-3x mb-3"></i>
+        <p class="mb-0">Click "Full Attendance Record" to view this student's complete term attendance history.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

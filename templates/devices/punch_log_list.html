@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% load tz %}
+
+{% block title %}Punch Logs{% endblock %}
+{% block menu_devices %}open{% endblock %}
+
+{% block page_title %}Punch Logs <small class="text-body-secondary fs-6">(last 500)</small>{% endblock %}
+
+{% block page_actions %}
+  <a href="{% url 'devices:device_list' %}" class="btn btn-outline-secondary btn-sm">
+    <i class="ri ri-arrow-left-line me-1"></i> Back to Devices
+  </a>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover table-sm mb-0">
+      <thead>
+        <tr>
+          <th>ZK User ID</th>
+          <th>Person Type</th>
+          <th>Device</th>
+          <th>Punch Time</th>
+          <th>Processed</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in logs %}
+        <tr>
+          <td><code>{{ log.zk_user_id }}</code></td>
+          <td>
+            {% if log.person_type == 'student' %}
+              <span class="badge bg-label-primary">Student</span>
+            {% elif log.person_type == 'staff' %}
+              <span class="badge bg-label-info">Staff</span>
+            {% else %}
+              <span class="badge bg-label-secondary">Unknown</span>
+            {% endif %}
+          </td>
+          <td>{{ log.device.name }}</td>
+          <td>{{ log.punch_time|localtime|date:"d M Y H:i:s" }}</td>
+          <td>
+            {% if log.is_processed %}
+              <span class="badge bg-label-success">Yes</span>
+            {% else %}
+              <span class="badge bg-label-warning">Pending</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" class="text-center text-body-secondary py-5">
+            <i class="ri ri-inbox-line ri-2x mb-2 d-block"></i>
+            No punch logs yet. Sync a device to start pulling records.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ student.full_name }}{% endblock %}
+{% block menu_students %}active{% endblock %}
+
+{% block page_title %}{{ student.full_name }}{% endblock %}
+
+{% block page_actions %}
+  <a href="{% url 'people:student_detail' student.pk %}" class="btn btn-outline-secondary btn-sm">
+    <i class="ri ri-user-line me-1"></i> Profile
+  </a>
+{% endblock %}
+
+{% block content %}
+
+<div class="row g-4 mb-4">
+  <div class="col-md-3">
+    <div class="card">
+      <div class="card-body text-center py-4">
+        {% if student.photo %}
+          <img src="{{ student.photo.url }}" class="rounded-circle mb-3" style="width:80px;height:80px;object-fit:cover;" />
+        {% else %}
+          <div class="avatar avatar-xl mx-auto mb-3">
+            <span class="avatar-initial rounded-circle bg-label-primary fs-3">
+              {{ student.full_name|first|upper }}
+            </span>
+          </div>
+        {% endif %}
+        <h6 class="mb-1">{{ student.full_name }}</h6>
+        <p class="text-body-secondary small mb-0">{{ student.stream.full_name }}</p>
+        <code class="small">{{ student.admission_number }}</code>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-9">
+    <div class="card">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <h6 class="mb-0">
+          Attendance &mdash;
+          {% if current_term %}{{ current_term }}{% else %}No active term{% endif %}
+        </h6>
+        <span class="badge bg-label-primary">{{ records.count }} days recorded</span>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Week</th>
+              <th>Check In</th>
+              <th>Check Out</th>
+              <th>Status</th>
+              <th>Override</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for record in records %}
+            <tr>
+              <td>{{ record.date|date:"d M Y" }}</td>
+              <td>{% if record.school_week %}Wk {{ record.school_week.week_number }}{% else %}-{% endif %}</td>
+              <td>{{ record.check_in|default:"-" }}</td>
+              <td>{{ record.check_out|default:"-" }}</td>
+              <td>
+                {% if record.status == 'present' %}<span class="badge bg-label-success">Present</span>
+                {% elif record.status == 'late' %}<span class="badge bg-label-warning">Late</span>
+                {% elif record.status == 'absent' %}<span class="badge bg-label-danger">Absent</span>
+                {% elif record.status == 'excused' %}<span class="badge bg-label-info">Excused</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if record.is_overridden %}
+                  <span class="badge bg-label-secondary" title="{{ record.override_note }}">edited</span>
+                {% else %}-{% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="6" class="text-center text-body-secondary py-4">No attendance records this term.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

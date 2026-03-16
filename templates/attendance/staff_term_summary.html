@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+
+{% block title %}Staff Term Summary{% endblock %}
+
+{% block page_title %}
+  Staff Term Summary
+  {% if current_term %}<small class="text-body-secondary fs-6 ms-2">{{ current_term }}</small>{% endif %}
+{% endblock %}
+
+{% block page_actions %}
+  <a href="{% url 'attendance:staff_daily' %}" class="btn btn-outline-secondary btn-sm me-2">
+    <i class="ri ri-calendar-check-line me-1"></i> Daily Register
+  </a>
+  <a href="{% url 'attendance:staff_late_arrivals' %}" class="btn btn-outline-warning btn-sm">
+    <i class="ri ri-time-line me-1"></i> Late Arrivals
+  </a>
+{% endblock %}
+
+{% block content %}
+
+<!-- Filter -->
+<div class="card mb-4">
+  <div class="card-body">
+    <form method="get" class="row g-3 align-items-end">
+      <div class="col-md-4">
+        <label class="form-label">Staff Type</label>
+        <select name="staff_type" class="form-select">
+          <option value="" {% if not selected_type %}selected{% endif %}>All Staff</option>
+          <option value="teaching" {% if selected_type == 'teaching' %}selected{% endif %}>Teaching Only</option>
+          <option value="non_teaching" {% if selected_type == 'non_teaching' %}selected{% endif %}>Non-teaching Only</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <button type="submit" class="btn btn-primary w-100">
+          <i class="ri ri-filter-line me-1"></i> Filter
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th>Staff ID</th>
+          <th>Name</th>
+          <th>Type</th>
+          <th class="text-center text-success">Present</th>
+          <th class="text-center text-warning">Late</th>
+          <th class="text-center text-danger">Absent</th>
+          <th class="text-center text-info">Excused</th>
+          <th class="text-center">Days</th>
+          <th>Attendance %</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in summary %}
+        <tr>
+          <td><code>{{ row.member.staff_id }}</code></td>
+          <td>
+            <a href="{% url 'attendance:staff_detail' row.member.pk %}">
+              {{ row.member.full_name }}
+            </a>
+            <div class="text-body-secondary small">{{ row.member.designation|default:"" }}</div>
+          </td>
+          <td>
+            {% if row.member.staff_type == 'teaching' %}
+              <span class="badge bg-label-primary">Teaching</span>
+            {% else %}
+              <span class="badge bg-label-secondary">Non-teaching</span>
+            {% endif %}
+          </td>
+          <td class="text-center"><span class="badge bg-label-success">{{ row.present }}</span></td>
+          <td class="text-center"><span class="badge bg-label-warning">{{ row.late }}</span></td>
+          <td class="text-center"><span class="badge bg-label-danger">{{ row.absent }}</span></td>
+          <td class="text-center"><span class="badge bg-label-info">{{ row.excused }}</span></td>
+          <td class="text-center">{{ row.total }}</td>
+          <td style="min-width:130px;">
+            {% if row.total > 0 %}
+              <div class="d-flex align-items-center gap-2">
+                <div class="progress flex-grow-1" style="height:6px;">
+                  <div class="progress-bar
+                    {% if row.pct >= 80 %}bg-success{% elif row.pct >= 60 %}bg-warning{% else %}bg-danger{% endif %}"
+                    style="width:{{ row.pct }}%">
+                  </div>
+                </div>
+                <small class="{% if row.pct < 80 %}text-danger fw-medium{% endif %}">
+                  {{ row.pct }}%
+                </small>
+              </div>
+            {% else %}
+              <span class="text-body-secondary small">No records</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="9" class="text-center text-body-secondary py-5">
+            No staff attendance records for this term.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

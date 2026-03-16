@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+
+{% block title %}Import Users — {{ device.name }}{% endblock %}
+{% block menu_devices %}open{% endblock %}
+
+{% block page_title %}
+  Import Users from {{ device.name }}
+{% endblock %}
+
+{% block page_actions %}
+  <a href="{% url 'devices:device_list' %}" class="btn btn-outline-secondary btn-sm">
+    <i class="ri ri-arrow-left-line me-1"></i> Back to Devices
+  </a>
+{% endblock %}
+
+{% block content %}
+
+<div class="alert alert-info mb-4">
+  <i class="ri ri-information-line me-2"></i>
+  Found <strong>{{ zk_users|length }}</strong> enrolled users on <strong>{{ device.name }}</strong>.
+  Map each ZK user ID to an existing student or staff member.
+  Already-mapped users are shown below — you can remap them at any time.
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th>ZK User ID</th>
+          <th>Name on Device</th>
+          <th>Currently Mapped To</th>
+          <th>Map to Person</th>
+          <th>Person Type</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for user in zk_users %}
+        <tr>
+          <td><code>{{ user.user_id }}</code></td>
+          <td>{{ user.name|default:"(no name)" }}</td>
+          <td>
+            {% if user.mapped_to %}
+              <span class="badge bg-label-success">
+                <i class="ri ri-link me-1"></i>{{ user.mapped_to }}
+              </span>
+            {% else %}
+              <span class="badge bg-label-secondary">Not mapped</span>
+            {% endif %}
+          </td>
+
+          <!-- Mapping form -->
+          <form method="post" action="{% url 'devices:map_user' device.pk %}" class="d-contents">
+            {% csrf_token %}
+            <input type="hidden" name="zk_user_id" value="{{ user.user_id }}" />
+
+            <td>
+              <select name="person_id" class="form-select form-select-sm" style="min-width:200px;" required>
+                <option value="">-- Select person --</option>
+                <optgroup label="Students">
+                  {% for student in students %}
+                    <option value="{{ student.pk }}"
+                      data-type="student"
+                      {% if user.mapped_type == 'student' and user.mapped_to == student|stringformat:'s' %}selected{% endif %}>
+                      {{ student.full_name }} ({{ student.admission_number }} · {{ student.stream.full_name }})
+                    </option>
+                  {% endfor %}
+                </optgroup>
+                <optgroup label="Staff">
+                  {% for member in staff %}
+                    <option value="{{ member.pk }}"
+                      data-type="staff"
+                      {% if user.mapped_type == 'staff' and user.mapped_to == member|stringformat:'s' %}selected{% endif %}>
+                      {{ member.full_name }} ({{ member.staff_id }})
+                    </option>
+                  {% endfor %}
+                </optgroup>
+              </select>
+            </td>
+
+            <td>
+              <select name="person_type" class="form-select form-select-sm" required>
+                <option value="student" {% if user.mapped_type == 'student' %}selected{% endif %}>Student</option>
+                <option value="staff" {% if user.mapped_type == 'staff' %}selected{% endif %}>Staff</option>
+              </select>
+            </td>
+
+            <td>
+              <button type="submit" class="btn btn-sm btn-primary">
+                <i class="ri ri-save-line me-1"></i>
+                {% if user.mapped_to %}Remap{% else %}Map{% endif %}
+              </button>
+            </td>
+          </form>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" class="text-center text-body-secondary py-5">
+            No users found on this device.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Auto-switch person_type select when a person is chosen from the dropdown
+  document.querySelectorAll('select[name="person_id"]').forEach(function(select) {
+    select.addEventListener('change', function() {
+      const selected = this.options[this.selectedIndex];
+      const type = selected.getAttribute('data-type');
+      if (type) {
+        const row = this.closest('tr');
+        const typeSelect = row.querySelector('select[name="person_type"]');
+        if (typeSelect) typeSelect.value = type;
+      }
+    });
+  });
+</script>
+{% endblock %}
