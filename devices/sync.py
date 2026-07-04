@@ -103,10 +103,8 @@ def sync_device(device: Device) -> dict:
         dupe_count  = 0
 
         for record in attendances:
-            punch_time = timezone.make_aware(
-                record.timestamp,
-                timezone.get_current_timezone()
-            )
+            punch_time = record.timestamp
+
 
             # clean user_id — strip non-digit chars from firmware quirks
             raw_id   = str(record.user_id).strip()
@@ -147,13 +145,16 @@ def sync_all_devices() -> list:
     return [sync_device(device) for device in devices]
 
 
-def sync_and_process() -> dict:
+def background_sync_and_process() -> dict:
     sync_results    = sync_all_devices()
     process_result  = process_punch_logs()
+    absent_result   = fill_absent_records()
     return {
         'sync_results'  : sync_results,
         'process_result': process_result,
+        'absent_result' : absent_result,
     }
+
 
 
 def process_punch_logs() -> dict:
@@ -414,10 +415,9 @@ def push_fingerprints(device: Device, zk_user_ids: list = None) -> dict:
 def fill_absent_records():
     """
     For every past school day in the current term, create ABSENT
-    AttendanceRecords for any active enrolled person (student or staff)
-    who has no record for that day.
-    Only processes days up to and including yesterday — today may still
-    have pending punches.
+    AttendanceRecords for any active enrolled person who has no record.
+    Runs up to yesterday — today may still have pending punches.
+    Uses bulk_create for performance.
     """
     from datetime import date, timedelta
     from attendance.models import AttendanceRecord
@@ -432,21 +432,20 @@ def fill_absent_records():
     except Term.DoesNotExist:
         return result
 
-    today         = date.today()
-    yesterday     = today - timedelta(days=1)
-    non_school    = set(NonSchoolDay.objects.values_list('date', flat=True))
+    today      = date.today()
+    yesterday  = today - timedelta(days=1)
+    non_school = set(NonSchoolDay.objects.values_list('date', flat=True))
 
-    # get school-wide active days (day_of_week numbers)
+    # school-wide active days — fallback Mon-Fri if none configured
     global_days = set(
-        SchoolDayConfig.objects.filter(stream__isnull=True).values_list('day_of_week', flat=True)
+        SchoolDayConfig.objects.filter(stream__isnull=True)
+        .values_list('day_of_week', flat=True)
     )
-    # fallback to Mon-Fri if no config defined
     if not global_days:
         global_days = {0, 1, 2, 3, 4}
 
-    # build list of past school days in current term up to yesterday
+    # build list of past school days in term up to yesterday
     school_days = []
-    cursor = max(current_term.start_date, today.replace(month=1, day=1) - timedelta(days=365))
     cursor = current_term.start_date
     while cursor <= min(yesterday, current_term.end_date):
         if cursor not in non_school and cursor.weekday() in global_days:
@@ -456,7 +455,7 @@ def fill_absent_records():
     if not school_days:
         return result
 
-    # get school week map
+    # school week lookup map
     week_map = {}
     for week in current_term.weeks.all():
         d = week.start_date
@@ -464,57 +463,67 @@ def fill_absent_records():
             week_map[d] = week
             d += timedelta(days=1)
 
-    # active enrolled students and staff
+    # enrolled people
     students = list(Student.objects.filter(is_active=True, zk_user_id__isnull=False))
     staff    = list(StaffMember.objects.filter(is_active=True, zk_user_id__isnull=False))
+
+    if not students and not staff:
+        return result
+
+    # get ALL existing attendance records for this term in one query
+    existing_student = set(
+        AttendanceRecord.objects.filter(
+            term=current_term,
+            person_type=AttendanceRecord.STUDENT
+        ).values_list('student_id', 'date')
+    )
+    existing_staff = set(
+        AttendanceRecord.objects.filter(
+            term=current_term,
+            person_type=AttendanceRecord.STAFF
+        ).values_list('staff_member_id', 'date')
+    )
+
+    # build records to create in bulk
+    to_create = []
 
     for school_day in school_days:
         school_week = week_map.get(school_day)
 
-        # students
-        existing_student_ids = set(
-            AttendanceRecord.objects.filter(
-                date=school_day,
-                person_type=AttendanceRecord.STUDENT
-            ).values_list('student_id', flat=True)
-        )
         for student in students:
-            if student.pk not in existing_student_ids:
-                try:
-                    AttendanceRecord.objects.create(
-                        person_type   = AttendanceRecord.STUDENT,
-                        student       = student,
-                        date          = school_day,
-                        academic_year = current_year,
-                        term          = current_term,
-                        school_week   = school_week,
-                        status        = AttendanceRecord.ABSENT,
-                    )
-                    result['created'] += 1
-                except Exception as e:
-                    result['errors'].append(f'Student {student.pk} {school_day}: {e}')
+            if (student.pk, school_day) not in existing_student:
+                to_create.append(AttendanceRecord(
+                    person_type   = AttendanceRecord.STUDENT,
+                    student       = student,
+                    date          = school_day,
+                    academic_year = current_year,
+                    term          = current_term,
+                    school_week   = school_week,
+                    status        = AttendanceRecord.ABSENT,
+                ))
 
-        # staff
-        existing_staff_ids = set(
-            AttendanceRecord.objects.filter(
-                date=school_day,
-                person_type=AttendanceRecord.STAFF
-            ).values_list('staff_member_id', flat=True)
-        )
         for member in staff:
-            if member.pk not in existing_staff_ids:
-                try:
-                    AttendanceRecord.objects.create(
-                        person_type   = AttendanceRecord.STAFF,
-                        staff_member  = member,
-                        date          = school_day,
-                        academic_year = current_year,
-                        term          = current_term,
-                        school_week   = school_week,
-                        status        = AttendanceRecord.ABSENT,
-                    )
-                    result['created'] += 1
-                except Exception as e:
-                    result['errors'].append(f'Staff {member.pk} {school_day}: {e}')
+            if (member.pk, school_day) not in existing_staff:
+                to_create.append(AttendanceRecord(
+                    person_type   = AttendanceRecord.STAFF,
+                    staff_member  = member,
+                    date          = school_day,
+                    academic_year = current_year,
+                    term          = current_term,
+                    school_week   = school_week,
+                    status        = AttendanceRecord.ABSENT,
+                ))
+
+    # bulk insert in batches of 500
+    batch_size = 500
+    for i in range(0, len(to_create), batch_size):
+        try:
+            created = AttendanceRecord.objects.bulk_create(
+                to_create[i:i + batch_size],
+                ignore_conflicts=True
+            )
+            result['created'] += len(created)
+        except Exception as e:
+            result['errors'].append(str(e))
 
     return result

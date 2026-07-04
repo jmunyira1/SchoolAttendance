@@ -28,22 +28,25 @@ def _parse_gender(value):
 
 
 def _resolve_stream(selected_form, stream_raw, stream_cache):
-    """
-    Find a Stream by form + stream name from Excel.
-    Match is case-insensitive. Uses cache to avoid repeated DB hits.
-    """
     key = (selected_form.pk, stream_raw.strip().lower())
     if key in stream_cache:
         return stream_cache[key]
 
+    # try existing first
     stream = Stream.objects.filter(
         form=selected_form,
         name__iexact=stream_raw.strip()
     ).first()
 
+    # not found — create it automatically
+    if not stream:
+        stream = Stream.objects.create(
+            form=selected_form,
+            name=stream_raw.strip(),
+        )
+
     stream_cache[key] = stream
     return stream
-
 
 @login_required
 @admin_required

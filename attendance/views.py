@@ -10,7 +10,6 @@ from datetime import date, timedelta
 from .models import AttendanceRecord, AttendanceOverrideLog
 from people.models import Student, StaffMember, Stream
 from core.models import Term, AcademicYear, SchoolWeek
-from devices.sync import sync_and_process
 from accounts.decorators import admin_or_principal_required, storekeeper_required
 
 
@@ -23,7 +22,6 @@ def get_current_term():
 @login_required
 @admin_or_principal_required
 def attendance_dashboard(request):
-    sync_results = sync_and_process()
     today        = date.today()
     current_term = get_current_term()
 
@@ -65,7 +63,6 @@ def attendance_dashboard(request):
         'late_staff'      : late_staff,
         'total_students'  : total_students,
         'total_staff'     : total_staff,
-        'sync_results'    : sync_results,
     }
     return render(request, 'attendance/dashboard.html', context)
 
@@ -75,7 +72,7 @@ def attendance_dashboard(request):
 @login_required
 @admin_or_principal_required
 def daily_attendance(request):
-    sync_and_process()
+
 
     selected_date   = request.GET.get('date', date.today().isoformat())
     selected_stream = request.GET.get('stream', '')
@@ -108,7 +105,6 @@ def daily_attendance(request):
 @login_required
 @admin_or_principal_required
 def student_attendance(request, pk):
-    sync_and_process()
     student      = get_object_or_404(Student, pk=pk)
     current_term = get_current_term()
 
@@ -163,7 +159,6 @@ def override_attendance(request, pk):
 @login_required
 @admin_or_principal_required
 def absentee_report(request):
-    sync_and_process()
 
     selected_date   = request.GET.get('date', date.today().isoformat())
     selected_stream = request.GET.get('stream', '')
@@ -195,7 +190,6 @@ def absentee_report(request):
 @login_required
 @admin_or_principal_required
 def term_summary(request):
-    sync_and_process()
     current_term    = get_current_term()
     selected_stream = request.GET.get('stream', '')
     streams         = Stream.objects.all().select_related('form')
@@ -236,7 +230,6 @@ def term_summary(request):
 @admin_or_principal_required
 def staff_daily(request):
     """Daily staff register — who is present/absent/late today."""
-    sync_and_process()
 
     selected_date = request.GET.get('date', date.today().isoformat())
     selected_type = request.GET.get('staff_type', '')  # teaching / non_teaching
@@ -283,7 +276,6 @@ def staff_daily(request):
 @admin_or_principal_required
 def staff_term_summary(request):
     """Term summary — days present/absent/late per staff member."""
-    sync_and_process()
     current_term  = get_current_term()
     selected_type = request.GET.get('staff_type', '')
 
@@ -324,7 +316,6 @@ def staff_term_summary(request):
 @admin_or_principal_required
 def staff_late_arrivals(request):
     """Late arrivals report — staff who checked in late, filterable by date range."""
-    sync_and_process()
 
     # default to current week
     today      = date.today()
@@ -376,7 +367,6 @@ def staff_late_arrivals(request):
 @admin_or_principal_required
 def staff_attendance(request, pk):
     """Individual staff member attendance history for current term."""
-    sync_and_process()
     staff_member = get_object_or_404(StaffMember, pk=pk)
     current_term = get_current_term()
 
@@ -407,7 +397,6 @@ def staff_attendance(request, pk):
 @login_required
 @storekeeper_required
 def storekeeper_view(request):
-    sync_and_process()
     today   = date.today()
     streams = Stream.objects.all().select_related('form').order_by('form__order', 'name')
 

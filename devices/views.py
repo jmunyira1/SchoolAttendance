@@ -6,7 +6,7 @@ from django.contrib import messages
 
 from .models import Device, PunchLog, FingerprintTemplate
 from .forms import DeviceForm
-from .sync import (sync_device, sync_all_devices, sync_and_process,
+from .sync import (sync_device, sync_all_devices,
                    get_device_users, backup_fingerprints, push_fingerprints)
 from accounts.decorators import admin_required
 from people.models import Student, StaffMember
